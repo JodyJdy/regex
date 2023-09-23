@@ -12,8 +12,6 @@ class RegexToASTree {
 
     private final String regex;
     int i = 0;
-    boolean matchStart = false;
-    boolean matchEnd = false;
     /**
      * 组的编号
      */
@@ -113,13 +111,21 @@ class RegexToASTree {
         }
     }
 
-    Ast asTree() {
-        Ast ast = orTree();
-        ast.setNext(Util.END_AST);
-        tree2Linked(ast);
-        //将自身当作编号为0的组
-        groupAst.add(0, ast);
-        return ast;
+    /**
+     * 存储最终的结构
+     */
+    private Ast tree;
+
+    Ast astTree() {
+        if (tree == null) {
+            Ast ast = orTree();
+            ast.setNext(Util.END_AST);
+            tree2Linked(ast);
+            //将自身当作编号为0的组
+            groupAst.add(0, ast);
+            tree = ast;
+        }
+        return tree;
     }
 
     private Ast orTree() {

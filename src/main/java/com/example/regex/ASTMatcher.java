@@ -6,7 +6,7 @@ import java.util.Map;
 
 public class ASTMatcher {
 
-    private static final Map<String, ASTMatcher> treeMap = new HashMap<>();
+    private static final Map<String, RegexToASTree> treeMap = new HashMap<>();
 
     private final Ast regexTree;
 
@@ -60,21 +60,18 @@ public class ASTMatcher {
 
     public static ASTMatcher compile(String regex) {
         Util.checkEmpty(regex);
-        ASTMatcher matcher = treeMap.get(regex);
-        if (matcher == null) {
-            RegexToASTree regexToASTree = new RegexToASTree(regex);
-            Ast ast = regexToASTree.asTree();
-            ASTMatcher matcher1 = new ASTMatcher(ast, regexToASTree.groupAst);
-            matcher1.hasRecursiveNoGreedy = regexToASTree.hasRecursiveNoGreedy;
-            treeMap.put(regex, matcher1);
-            return matcher1;
+        RegexToASTree regexToASTree = treeMap.get(regex);
+        if (regexToASTree == null) {
+            regexToASTree = new RegexToASTree(regex);
+            treeMap.put(regex, regexToASTree);
         }
-        return matcher;
+        return new ASTMatcher(regexToASTree);
     }
 
-    private ASTMatcher(Ast regexTree, List<Ast> groupAsts) {
-        this.regexTree = regexTree;
-        this.groupAsts = groupAsts;
+    private ASTMatcher(RegexToASTree regexToASTree) {
+        this.regexTree = regexToASTree.astTree();
+        this.groupAsts = regexToASTree.groupAst;
+        this.hasRecursiveNoGreedy = regexToASTree.hasRecursiveNoGreedy;
     }
 
     /**

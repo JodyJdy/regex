@@ -2,13 +2,13 @@ package com.example.test;
 
 import com.example.regex.ASTMatcher;
 
+import java.util.Arrays;
 import java.util.regex.Pattern;
 
 public class ASTRunner {
     public static void main(String[] args) {
         test();
         compare("\\babc\\b","abc",1000000);
-
     }
 
     /**
