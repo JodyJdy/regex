@@ -15,17 +15,9 @@ public class ASTMatcher {
      */
     private final List<Ast> groupAsts;
     /**
-     * 是否匹配开始 ^， find模式生效
+     * find模式下，查找结果的起点
      */
-    boolean matchStart;
-    /**
-     * 是否匹配结尾 $， find模式生效
-     */
-    boolean matchEnd;
-    /**
-     * find模式下，search的起点
-     */
-    int searchStart = 0;
+    int findResultStart = 0;
     /**
      * find模式下， searchStart->result，是结果集的一种;
      * match模式下：表达式引用时，用于存储表达式的结果
@@ -55,7 +47,7 @@ public class ASTMatcher {
     private boolean strIsEnd(int i, int end) {
         //当 match模式且expressionLevel > 0时，说明处于表达式匹配，且已经匹配到了结尾
         //只要 i >searchStart，就记录一个结果到result中
-        boolean find = (matchMode && (i == end || expressionLevel > 0 && i > searchStart)) || (!matchMode && i >= searchStart);
+        boolean find = (matchMode && (i == end || expressionLevel > 0 && i > findResultStart)) || (!matchMode && i >= findResultStart);
         if (find) {
             result = i;
         }
@@ -73,8 +65,6 @@ public class ASTMatcher {
             RegexToASTree regexToASTree = new RegexToASTree(regex);
             Ast ast = regexToASTree.asTree();
             ASTMatcher matcher1 = new ASTMatcher(ast, regexToASTree.groupAst);
-            matcher1.matchStart = regexToASTree.matchStart;
-            matcher1.matchEnd = regexToASTree.matchEnd;
             matcher1.hasRecursiveNoGreedy = regexToASTree.hasRecursiveNoGreedy;
             treeMap.put(regex, matcher1);
             return matcher1;
@@ -88,18 +78,18 @@ public class ASTMatcher {
     }
 
     /**
-     * 从 searchRight->searchLeft查找
+     * 起点范围在 [searchLeft,searchRight],终点为end
+     * 从 searchRight ->  searchLeft 查找， 找到一个符合的结果停止
      *
-     * @param searchLeft  左边的查找范围
-     * @param searchRight 右边的查找范围
      * @param end         字符串的尾部位置
      */
-    private boolean findFromEnd(String str, int searchLeft, int searchRight, int end, Ast ast) {
+    private boolean findBackWard(String str, int searchLeft, int searchRight, int end, Ast ast) {
         int search = searchRight;
         while (searchLeft <= search) {
-            if (doMatch(str, search, end, ast)) {
+            ast.clearNumAstStatus();
+            if (searchTree(ast, search, end, str)) {
                 // record
-                searchStart = search;
+                findResultStart = search;
                 return true;
             }
             search--;
@@ -108,18 +98,19 @@ public class ASTMatcher {
     }
 
     /**
-     * 从 从searchLeft->searchRight查找
+     * 起点范围在 [searchLeft,searchRight],终点为end
+     * 从 searchLeft ->  searchRight 查找， 找到一个符合的结果停止
      *
      * @param searchLeft  左边的查找范围
      * @param searchRight 右边的查找范围
      * @param end         字符串的尾部位置
      */
-    boolean findFromStart(String str, int searchLeft, int searchRight, int end, Ast ast) {
+    boolean findForward(String str, int searchLeft, int searchRight, int end, Ast ast) {
         int search = searchLeft;
         while (search <= searchRight) {
             ast.clearNumAstStatus();
             if (searchTree(ast, search, end, str)) {
-                searchStart = search;
+                findResultStart = search;
                 return true;
             }
             search++;
@@ -128,19 +119,37 @@ public class ASTMatcher {
 
     }
 
+
+    /**
+     * @param start 起始查找下标
+     */
+    public boolean find(String str, int start) {
+        return findForward(str, start, str.length(), str.length(), regexTree);
+    }
+
+    /**
+     *从尾部开始查找
+     */
+
+    public boolean backwardFind(String str) {
+        return backwardFind(str, 0);
+    }
+
+    /**
+     * @param backEnd  反向查找的结尾位置
+     */
+    public boolean backwardFind(String str, int backEnd) {
+        return findBackWard(str, backEnd, str.length(),str.length(), regexTree);
+    }
+
+    /**
+     *默认从头开始查找
+     */
     public boolean find(String str) {
-        //如果同时具有^ 和$ 等价于 match
-        matchMode = matchStart && matchEnd;
         if (matchMode) {
             return isMatch(str);
         }
-        //有 $符号
-        if (matchEnd) {
-            return findFromEnd(str, 0, str.length(), str.length(), regexTree);
-        }
-        // 有 ^ 符号或者正常的查找情况
-        return findFromStart(str, 0, matchStart ? 0 : str.length(), str.length(), regexTree);
-
+        return findForward(str, 0, str.length(), str.length(), regexTree);
     }
 
     public boolean isMatch(String str) {
@@ -386,23 +395,23 @@ public class ASTMatcher {
                 int groupType = ast.groupType;
                 if (ast.groupType == Group.FORWARD_POSTIVE_SEARCH) {
                     ast.groupType = Group.NOT_CATCH_GROUP;
-                    if (findFromStart(str, i, i, str.length(), ast)) {
+                    if (findForward(str, i, i, str.length(), ast)) {
                         result = next;
                     }
                 } else if (ast.groupType == Group.FORWARD_NEGATIVE_SEARCH) {
                     ast.groupType = Group.NOT_CATCH_GROUP;
                     //和上面相反
-                    if (!findFromStart(str, i, i, str.length(), ast)) {
+                    if (!findForward(str, i, i, str.length(), ast)) {
                         result = next;
                     }
                 } else if (ast.groupType == Group.BACKWARD_POSTIVE_SEARCH) {
                     ast.groupType = Group.NOT_CATCH_GROUP;
-                    if (findFromEnd(str, 0, i - 1, i, ast)) {
+                    if (findBackWard(str, 0, i - 1, i, ast)) {
                         result = next;
                     }
                 } else if (ast.groupType == Group.BACKWARD_NEGATIVE_SEARCH) {
                     ast.groupType = Group.NOT_CATCH_GROUP;
-                    if (!findFromEnd(str, 0, i - 1, i, ast)) {
+                    if (!findBackWard(str, 0, i - 1, i, ast)) {
                         result = next;
                     }
                 }
@@ -438,7 +447,7 @@ public class ASTMatcher {
         if (hasRecursiveNoGreedy) {
             return recursiveStart;
         }
-        return searchStart;
+        return findResultStart;
     }
 
     public int getResultEnd() {

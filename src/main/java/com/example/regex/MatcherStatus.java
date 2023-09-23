@@ -14,9 +14,6 @@ class MatcherStatus {
     private final Map<Ast,AstStatus> astStatusMap = new HashMap<>();
 
     private final ASTMatcher astMatcher;
-
-    private final boolean matchStart;
-    private final boolean matchEnd ;
     private final int searchStart;
     private final int findResult;
     private final boolean matchMood;
@@ -24,13 +21,11 @@ class MatcherStatus {
     private final Ast searchAst;
 
     MatcherStatus(ASTMatcher astMatcher,Ast searchAst){
-        this.matchStart = astMatcher.matchStart;
-        this.matchEnd = astMatcher.matchEnd;
-        this.searchStart = astMatcher.searchStart;
+        this.searchStart = astMatcher.findResultStart;
         this.findResult = astMatcher.result;
         this.matchMood = astMatcher.matchMode;
         //默认值
-        astMatcher.searchStart = astMatcher.result = 0;
+        astMatcher.findResultStart = astMatcher.result = 0;
         this.astMatcher = astMatcher;
         this.searchAst =searchAst;
         //存储ast的状态
@@ -38,9 +33,7 @@ class MatcherStatus {
     }
 
     void resumeStatus(){
-        astMatcher.matchStart = this.matchStart;
-        astMatcher.matchEnd = this.matchEnd;
-        astMatcher.searchStart = this.searchStart;
+        astMatcher.findResultStart = this.searchStart;
         astMatcher.result = this.findResult;
         astMatcher.matchMode = this.matchMood;
         this.searchAst.loadStatus(astStatusMap);

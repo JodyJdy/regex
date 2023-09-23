@@ -199,7 +199,7 @@ public class TerminalAst extends Ast implements Cloneable {
         Util.resetNext(ast, Util.END_AST);
         //查询
         int result = 0;
-        if (astMatcher.findFromStart(str, i, i, end, ast)) {
+        if (astMatcher.findForward(str, i, i, end, ast)) {
             result = astMatcher.result - i;
             storeRecursive(astMatcher);
         }
@@ -219,17 +219,17 @@ public class TerminalAst extends Ast implements Cloneable {
         if (!this.isRecursiveType() || !astMatcher.hasRecursiveNoGreedy) {
             return;
         }
-        if (astMatcher.searchStart == astMatcher.result) {
+        if (astMatcher.findResultStart == astMatcher.result) {
             return;
         }
         if (astMatcher.recursiveStart == astMatcher.recursiveEnd) {
-            astMatcher.recursiveStart = astMatcher.searchStart;
+            astMatcher.recursiveStart = astMatcher.findResultStart;
             astMatcher.recursiveEnd = astMatcher.result;
             return;
         }
-        if (astMatcher.searchStart <= astMatcher.recursiveStart) {
-            if (astMatcher.recursiveStart - astMatcher.searchStart < astMatcher.recursiveEnd - astMatcher.recursiveStart) {
-                astMatcher.recursiveStart = astMatcher.searchStart;
+        if (astMatcher.findResultStart <= astMatcher.recursiveStart) {
+            if (astMatcher.recursiveStart - astMatcher.findResultStart < astMatcher.recursiveEnd - astMatcher.recursiveStart) {
+                astMatcher.recursiveStart = astMatcher.findResultStart;
                 astMatcher.recursiveEnd = astMatcher.result;
             }
         }
