@@ -6,14 +6,14 @@ import java.util.Map;
 
 public class ASTMatcher {
 
-    private static Map<String, ASTMatcher> treeMap = new HashMap<>();
+    private static final Map<String, ASTMatcher> treeMap = new HashMap<>();
 
-    private Ast regexTree;
+    private final Ast regexTree;
 
     /**
      * 所有的组
      */
-    private List<Ast> groupAsts;
+    private final List<Ast> groupAsts;
     /**
      * 是否匹配开始 ^， find模式生效
      */

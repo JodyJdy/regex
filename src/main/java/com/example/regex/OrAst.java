@@ -7,7 +7,7 @@ import java.util.Map;
 public class OrAst extends Ast implements Cloneable{
     List<Ast> asts;
     OrAst(List<Ast> asts) {
-      this.asts = asts;
+        this.asts = asts;
     }
 
     @Override

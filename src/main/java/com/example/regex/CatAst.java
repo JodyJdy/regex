@@ -23,9 +23,9 @@ public class CatAst extends Ast implements Cloneable {
 
     @Override
     void clearNumAstStatus() {
-       for(Ast a : ast){
-           a.clearNumAstStatus();
-       }
+        for(Ast a : ast){
+            a.clearNumAstStatus();
+        }
     }
     @Override
     void storeStatus(Map<Ast, MatcherStatus.AstStatus> map) {

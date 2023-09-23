@@ -11,17 +11,17 @@ class MatcherStatus {
     /**
      * 存储ast牵扯到的所有状态
      */
-   private final Map<Ast,AstStatus> astStatusMap = new HashMap<>();
+    private final Map<Ast,AstStatus> astStatusMap = new HashMap<>();
 
-    private ASTMatcher astMatcher;
+    private final ASTMatcher astMatcher;
 
-    private boolean matchStart;
-    private boolean matchEnd ;
-    private int searchStart;
-    private int findResult;
-    private boolean matchMood;
+    private final boolean matchStart;
+    private final boolean matchEnd ;
+    private final int searchStart;
+    private final int findResult;
+    private final boolean matchMood;
 
-    private Ast searchAst;
+    private final Ast searchAst;
 
     MatcherStatus(ASTMatcher astMatcher,Ast searchAst){
         this.matchStart = astMatcher.matchStart;
@@ -50,7 +50,7 @@ class MatcherStatus {
 
     /**
      * 用于存储 Ast牵扯到的所有状态
-      */
+     */
     static class AstStatus{
         int groupStart;
         int groupEnd;

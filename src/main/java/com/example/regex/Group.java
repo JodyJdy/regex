@@ -19,7 +19,7 @@ class Group {
     static final int BACKWARD_POSTIVE_SEARCH = 0B1000;
 
     /**
-      * 正向否定查找
+     * 正向否定查找
      */
     static final int FORWARD_NEGATIVE_SEARCH = 0B10000;
     /**

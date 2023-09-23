@@ -10,7 +10,7 @@ import java.util.Set;
  */
 class RegexToASTree {
 
-    private String regex;
+    private final String regex;
     int i = 0;
     boolean matchStart = false;
     boolean matchEnd = false;
@@ -30,17 +30,6 @@ class RegexToASTree {
     boolean hasRecursiveNoGreedy = false;
 
     RegexToASTree(String regex) {
-        //对 ^,$符号进行预处理
-        int start = 0, end = regex.length();
-        if (regex.charAt(0) == '^') {
-            matchStart = true;
-            start++;
-        }
-        if (regex.charAt(regex.length() - 1) == '$') {
-            matchEnd = true;
-            end--;
-        }
-        regex = regex.substring(start, end);
         this.regex = regex;
     }
 
@@ -104,7 +93,7 @@ class RegexToASTree {
             last.nextLeaveGroup = ast.nextLeaveGroup;
             last.leaveGroupNum = ast.leaveGroupNum;
             for(int x = 0; x < len - 1;x++){
-               asts.get(x).setNext(asts.get(x+1));
+                asts.get(x).setNext(asts.get(x+1));
             }
             for(Ast a : asts){
                 tree2Linked(a);
@@ -152,7 +141,7 @@ class RegexToASTree {
         List<Ast> asts = new ArrayList<>();
         asts.add(mul);
         while (!isEnd() && getCh() != '|' && getCh() != ')') {
-           asts.add(multiTree());
+            asts.add(multiTree());
         }
         if(asts.size() == 1){
             return mul;
@@ -271,6 +260,14 @@ class RegexToASTree {
                 next();
             }
             return terminator;
+        }
+        if (ch == '^') {
+            next();
+            return new TerminalAst(Terminal.START);
+        }
+        if (ch == '$') {
+            next();
+            return new TerminalAst(Terminal.END);
         }
         if (ch == '.') {
             next();

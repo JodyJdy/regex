@@ -25,7 +25,7 @@ public class NumAst extends Ast implements Cloneable{
     String type;
     /**
      * {num}
-      */
+     */
     int num;
     /**
      {start,end}

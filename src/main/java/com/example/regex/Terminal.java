@@ -64,6 +64,15 @@ class Terminal {
     final static int B = 1 << 11;
 
     /**
+     * 匹配开始符号
+     */
+    final static int START = 1 << 12;
+    /**
+     * 匹配结束符号
+     */
+    final static int END = 1 << 13;
+
+    /**
      * 组合类型
      */
 
@@ -113,13 +122,13 @@ class Terminal {
     private static boolean isWType(int type){
         return  (type & W) != 0;
     }
-     static boolean isW(char ch){
+    static boolean isW(char ch){
         return !isw(ch);
     }
     private static boolean iswType(int type){
         return  (type & w) != 0;
     }
-     static boolean isw(char c){
+    static boolean isw(char c){
         return c >= '0' && c <= '9' || c >='a' && c <='z' || c >='A' && c <='Z' || c =='_';
     }
     private static boolean isS(char c){
@@ -130,10 +139,17 @@ class Terminal {
     }
 
     private static boolean iss(char c){
-        return c == '\n' || c == '\f' || c == '\r' || c == '\t';
+        return c == '\n' || c == '\f' || c == '\r' || c == '\t' || c ==' ';
     }
     private static boolean issType(int type){
         return  (type & s) != 0;
+    }
+
+    public static boolean isStart(int type) {
+        return type == START;
+    }
+    public static boolean isEnd(int type) {
+        return type == END;
     }
 
     static boolean match(char ch,int type){

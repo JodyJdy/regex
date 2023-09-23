@@ -104,6 +104,21 @@ public class TerminalAst extends Ast implements Cloneable {
                 return result == 0 ? -1 : 0;
             }
         }
+        // 开始符号
+        if (Terminal.isStart(type)) {
+            if (i == 0) {
+                return 0;
+            }
+            return -1;
+        }
+        //结束符号
+        if (Terminal.isEnd(type)) {
+            if (i >= end || i >= str.length()) {
+                return 0;
+            }
+            return -1;
+        }
+
         //下面的都是占字符的终结符类型，一定要能取到字符，此时需要i进行判断
         if (i >= end || i >= str.length()) {
             return -1;

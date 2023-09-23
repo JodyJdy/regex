@@ -27,7 +27,7 @@ abstract class Ast implements Cloneable{
     int groupEnd;
     /**
      * 跳转到下个节点时，是否离开了一个group的范围
-      */
+     */
     boolean nextLeaveGroup;
     /**
      * 离开组的编号
@@ -48,15 +48,15 @@ abstract class Ast implements Cloneable{
     }
 
     /**
-      *  清除 NumAst的 circleNum,maxI信息
+     *  清除 NumAst的 circleNum,maxI信息
      */
-     void clearNumAstStatus(){}
+    void clearNumAstStatus(){}
     /**
      * 存储 search时，当前节点的状态，并将当前节点设置为初始状态
      */
-     void storeStatus(Map<Ast, MatcherStatus.AstStatus> map){
-          map.put(this,new MatcherStatus.AstStatus(this));
-     }
+    void storeStatus(Map<Ast, MatcherStatus.AstStatus> map){
+        map.put(this,new MatcherStatus.AstStatus(this));
+    }
     /**
      * 还原 当前节点的状态
      */

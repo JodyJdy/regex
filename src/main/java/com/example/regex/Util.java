@@ -29,7 +29,7 @@ class Util {
             doResetNext(numAst.ast);
         }
     }
-     static void resetNext(Ast ast,Ast next){
+    static void resetNext(Ast ast,Ast next){
         ast.setNext(next);
         doResetNext(ast);
     }
@@ -55,31 +55,31 @@ class Util {
         int i = 0;
         while(i < n){
             //合并 ast(i)和 ast(i+1)
-           if(couldMergeTerminal(astList.get(i))){
-               int j = i + 1;
-               while(j <n && couldMergeTerminal(astList.get(j))){
-                   j++;
-               }
-               if(j == i + 1){
-                   result.add(astList.get(i));
-                   i++;
-               } else{
-                  StringBuilder sb = new StringBuilder();
-                  for(int x = i;x<j;x++){
-                      TerminalAst t = (TerminalAst)astList.get(x);
-                      if(t.c != null){
-                          sb.append(t.c);
-                      } else{
-                          sb.append(t.cs);
-                      }
-                  }
-                  result.add(new TerminalAst(sb.toString(),Terminal.SIMPLE));
-                  i = j;
-               }
-           } else{
-               result.add(astList.get(i));
-               i++;
-           }
+            if(couldMergeTerminal(astList.get(i))){
+                int j = i + 1;
+                while(j <n && couldMergeTerminal(astList.get(j))){
+                    j++;
+                }
+                if(j == i + 1){
+                    result.add(astList.get(i));
+                    i++;
+                } else{
+                    StringBuilder sb = new StringBuilder();
+                    for(int x = i;x<j;x++){
+                        TerminalAst t = (TerminalAst)astList.get(x);
+                        if(t.c != null){
+                            sb.append(t.c);
+                        } else{
+                            sb.append(t.cs);
+                        }
+                    }
+                    result.add(new TerminalAst(sb.toString(),Terminal.SIMPLE));
+                    i = j;
+                }
+            } else{
+                result.add(astList.get(i));
+                i++;
+            }
         }
         return result;
     }
