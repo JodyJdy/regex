@@ -125,6 +125,60 @@ public class ASTMatcher {
     }
 
     /**
+     *将str中符合条件的内容替换成 replacement
+     */
+    public String replaceFirst(String str,String replacement) {
+        reset();
+        if (!find(str)) {
+            return str;
+        }
+        StringBuilder sb = new StringBuilder();
+        int start = getResultStart();
+        int end = getResultEnd();
+        if (start != 0) {
+            sb.append(str, 0, start);
+        }
+        sb.append(replacement);
+        if (end < str.length()) {
+            sb.append(str, end, str.length());
+        }
+        return sb.toString();
+    }
+
+    /**
+     *将str中符合条件的全部替换成replacement
+     */
+    public String replaceAll(String str,String replacement) {
+        reset();
+        StringBuilder sb = new StringBuilder();
+
+        if (find(str)) {
+            int start;
+            int end;
+            int lastAppendPosition = 0;
+            do {
+                start = getResultStart();
+                end = getResultEnd();
+                if (start > lastAppendPosition) {
+                    sb.append(str, lastAppendPosition, start);
+                }
+                sb.append(replacement);
+                lastAppendPosition = end;
+                int nextSearch = end;
+                if (nextSearch == start) {
+                    nextSearch++;
+                }
+                if (!find(str, nextSearch)) {
+                    break;
+                }
+            } while (true);
+            if (end < str.length()) {
+                sb.append(str, end, str.length());
+            }
+        }
+        return sb.toString();
+    }
+    /**
      * @param backEnd  反向查找的结尾位置
      */
     public boolean backwardFind(String str, int backEnd) {
@@ -437,6 +491,13 @@ public class ASTMatcher {
             return recursiveStart;
         }
         return findResultStart;
+    }
+
+    public void reset(){
+       this.findResultStart = 0;
+       this.result = 0;
+       this.recursiveStart = 0;
+       this.recursiveEnd = 0;
     }
 
     public int getResultEnd() {

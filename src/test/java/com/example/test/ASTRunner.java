@@ -3,12 +3,18 @@ package com.example.test;
 import com.example.regex.ASTMatcher;
 
 import java.util.Arrays;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ASTRunner {
     public static void main(String[] args) {
+        //高级特性测试
         test();
+        //测试replace方法
+        testReplace();
+        //性能测试
         compare("\\babc\\b","abc",1000000);
+
     }
 
     /**
@@ -57,6 +63,14 @@ public class ASTRunner {
         System.out.println(astMatcher.find("{'key1':'value1','key2':123,'key3':{},'key4':{'key5':'value5'}}"));
         System.out.println(astMatcher.getResultStart());
         System.out.println(astMatcher.getResultEnd());
+    }
+    public static void testReplace(){
+        Pattern p = Pattern.compile("(?:(?!0000)[0-9]{4}-(?:(?:0[1-9]|1[0-2])-(?:0[1-9]|1[0-9]|2[0-8])|(?:0[13-9]|1[0-2])-(?:29|30)|(?:0[13578]|1[02])-31)|(?:[0-9]{2}(?:0[48]|[2468][048]|[13579][26])|(?:0[48]|[2468][048]|[13579][26])00)-02-29)");
+        Matcher matcher = p.matcher("  2022-06-30 --  2022-06-30  bbb -- ");
+        ASTMatcher astMatcher = ASTMatcher.compile("(?:(?!0000)[0-9]{4}-(?:(?:0[1-9]|1[0-2])-(?:0[1-9]|1[0-9]|2[0-8])|(?:0[13-9]|1[0-2])-(?:29|30)|(?:0[13578]|1[02])-31)|(?:[0-9]{2}(?:0[48]|[2468][048]|[13579][26])|(?:0[48]|[2468][048]|[13579][26])00)-02-29)");
+        String str1 = matcher.replaceAll("bb");
+        String str2 = astMatcher.replaceAll("  2022-06-30 --  2022-06-30  bbb -- ", "bb");
+        System.out.println(str1.equals(str2));
     }
 
     /**
