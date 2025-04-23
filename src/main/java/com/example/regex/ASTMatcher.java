@@ -1,12 +1,9 @@
 package com.example.regex;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class ASTMatcher {
 
-    private static final Map<String, RegexToASTree> treeMap = new HashMap<>();
 
     private final Ast regexTree;
 
@@ -60,12 +57,7 @@ public class ASTMatcher {
 
     public static ASTMatcher compile(String regex) {
         Util.checkEmpty(regex);
-        RegexToASTree regexToASTree = treeMap.get(regex);
-        if (regexToASTree == null) {
-            regexToASTree = new RegexToASTree(regex);
-            treeMap.put(regex, regexToASTree);
-        }
-        return new ASTMatcher(regexToASTree);
+        return new ASTMatcher(new RegexToASTree(regex));
     }
 
     private ASTMatcher(RegexToASTree regexToASTree) {
