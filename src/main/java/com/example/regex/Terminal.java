@@ -40,11 +40,12 @@ class Terminal {
     final static int s = 1<<6;
 
     /**
+     * 分组引用， 引用的组的编号存储在低7位
      * groupNum catch
      */
     final static int GROUP = 1<<8;
     /**
-     * low 7 bits to store groupNum num while type is groupNum catch
+     * 分组引用时 低7位存储匹配的组 groupNum
      */
     final static int GROUP_NUM_MAST = 0b1111111;
 

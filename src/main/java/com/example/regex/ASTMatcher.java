@@ -1,6 +1,6 @@
 package com.example.regex;
 
-import java.util.List;
+import java.util.*;
 
 public class ASTMatcher {
 
@@ -39,7 +39,7 @@ public class ASTMatcher {
     /**
      * 记录 递归非贪婪匹配的最终结果
      */
-    int recursiveStart = 0, recursiveEnd = 0;
+    Set<FindResult> recursiveNoGreedyResults = new HashSet<>();
 
     private boolean strIsEnd(int i, int end) {
         //当 match模式且expressionLevel > 0时，说明处于表达式匹配，且已经匹配到了结尾
@@ -133,8 +133,8 @@ public class ASTMatcher {
             return str;
         }
         StringBuilder sb = new StringBuilder();
-        int start = getResultStart();
-        int end = getResultEnd();
+        int start =findResultStart;
+        int end = result;
         if (start != 0) {
             sb.append(str, 0, start);
         }
@@ -157,8 +157,8 @@ public class ASTMatcher {
             int end;
             int lastAppendPosition = 0;
             do {
-                start = getResultStart();
-                end = getResultEnd();
+                start = findResultStart;
+                end = result;
                 if (start > lastAppendPosition) {
                     sb.append(str, lastAppendPosition, start);
                 }
@@ -483,30 +483,32 @@ public class ASTMatcher {
         return ast.getNext();
     }
 
-    public int getResultStart() {
-        if (matchMode) {
-            throw new RuntimeException("match mode !");
-        }
-        if (hasRecursiveNoGreedy) {
-            return recursiveStart;
-        }
-        return findResultStart;
-    }
 
     public void reset(){
        this.findResultStart = 0;
        this.result = 0;
-       this.recursiveStart = 0;
-       this.recursiveEnd = 0;
     }
 
-    public int getResultEnd() {
+    /**
+     *返回一个查询结果
+     */
+    public FindResult getFindResult() {
         if (matchMode) {
-            throw new RuntimeException("match mode !");
+            throw new RuntimeException("match模式，无法返回结果");
         }
-        if (hasRecursiveNoGreedy) {
-            return recursiveEnd;
+        return new FindResult(findResultStart,result);
+    }
+
+    /**
+     *递归非贪婪匹配模式下返回所有结果
+     */
+    public List<FindResult> getRecursiveNoGreedyFindResult() {
+        if (matchMode) {
+            throw new RuntimeException("match模式，无法返回结果");
         }
-        return result;
+        recursiveNoGreedyResults.add(new FindResult(findResultStart,result));
+        List<FindResult> findResults = new ArrayList<>(recursiveNoGreedyResults);
+        Collections.sort(findResults);
+        return findResults;
     }
 }

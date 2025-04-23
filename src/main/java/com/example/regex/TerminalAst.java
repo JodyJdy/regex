@@ -70,7 +70,7 @@ public class TerminalAst extends Ast implements Cloneable {
      */
     private int isWordBorder(String str, int i, int end) {
         //开始和结尾处的单词边界
-        if (i == 0 && str.length() != 0 && end != 0 && Terminal.isw(str.charAt(i))) {
+        if (i == 0 && !str.isEmpty() && end != 0 && Terminal.isw(str.charAt(i))) {
             return 0;
         }
         if (i == str.length() || i == end) {
@@ -222,17 +222,8 @@ public class TerminalAst extends Ast implements Cloneable {
         if (astMatcher.findResultStart == astMatcher.result) {
             return;
         }
-        if (astMatcher.recursiveStart == astMatcher.recursiveEnd) {
-            astMatcher.recursiveStart = astMatcher.findResultStart;
-            astMatcher.recursiveEnd = astMatcher.result;
-            return;
-        }
-        if (astMatcher.findResultStart <= astMatcher.recursiveStart) {
-            if (astMatcher.recursiveStart - astMatcher.findResultStart < astMatcher.recursiveEnd - astMatcher.recursiveStart) {
-                astMatcher.recursiveStart = astMatcher.findResultStart;
-                astMatcher.recursiveEnd = astMatcher.result;
-            }
-        }
+        //添加到结果集合里面
+        astMatcher.recursiveNoGreedyResults.add( new FindResult(astMatcher.findResultStart, astMatcher.result));
     }
 
     @Override

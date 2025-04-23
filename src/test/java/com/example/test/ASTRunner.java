@@ -12,8 +12,10 @@ public class ASTRunner {
         test();
         //测试replace方法
         testReplace();
+        //测试递归
+        testRecursive();
         //性能测试
-        compare("\\babc\\b","abc",1000000);
+        performanceCompare("\\babc\\b","abc",1000000);
 
     }
 
@@ -57,13 +59,30 @@ public class ASTRunner {
         //表达式引用，除了递归引用支持贪婪非贪婪,match函数不能很好的支持
         ASTMatcher matcher6 = ASTMatcher.compile("(a|b|c)xx\\g<1>");
         System.out.println(matcher6.find("axxb"));
-        // 利用递归正则匹配 json， match函数可能不能很好的支持递归引用
-        //但是find可以，只要找到一组符号的结果就行
+
+    }
+    /**
+     * 测试递归
+     * match不支持 递归引用， find支持
+     */
+    public static void testRecursive(){
+        //测试 递归贪婪匹配
         ASTMatcher astMatcher = ASTMatcher.compile("\\{\\}|\\{('\\w+':('\\w+'|\\d+|\\g<0>),)+'\\w+':('\\w+'|\\d+|\\g<0>)}|\\{'\\w+':('\\w+'|\\d+|\\g<0>)\\}");
         System.out.println(astMatcher.find("{'key1':'value1','key2':123,'key3':{},'key4':{'key5':'value5'}}"));
-        System.out.println(astMatcher.getResultStart());
-        System.out.println(astMatcher.getResultEnd());
+        System.out.println(astMatcher.getFindResult());
+        // 递归贪婪匹配会尽可能的多匹配字符
+        System.out.println(astMatcher.getRecursiveNoGreedyFindResult());
+        //测试 递归非贪婪匹配
+        ASTMatcher astMatcher2 = ASTMatcher.compile("\\{\\}|\\{('\\w+':('\\w+'|\\d+|\\g<0>?),)+'\\w+':('\\w+'|\\d+|\\g<0>?)}|\\{'\\w+':('\\w+'|\\d+|\\g<0>?)\\}");
+        System.out.println(astMatcher2.find("{'key1':'value1','key2':123,'key3':{},'key4':{'key5':'value5'}}"));
+        System.out.println(astMatcher2.getFindResult());
+        //递归非贪婪匹配， 尽可能少的匹配
+        System.out.println(astMatcher2.getRecursiveNoGreedyFindResult());
     }
+
+    /**
+     *测试 replace
+     */
     public static void testReplace(){
         Pattern p = Pattern.compile("(?:(?!0000)[0-9]{4}-(?:(?:0[1-9]|1[0-2])-(?:0[1-9]|1[0-9]|2[0-8])|(?:0[13-9]|1[0-2])-(?:29|30)|(?:0[13578]|1[02])-31)|(?:[0-9]{2}(?:0[48]|[2468][048]|[13579][26])|(?:0[48]|[2468][048]|[13579][26])00)-02-29)");
         Matcher matcher = p.matcher("  2022-06-30 --  2022-06-30  bbb -- ");
@@ -76,7 +95,7 @@ public class ASTRunner {
     /**
      * 和Java自带的Regex进行性能对比
      */
-    public static void compare(String regex, String str, int n) {
+    public static void performanceCompare(String regex, String str, int n) {
         long start = System.currentTimeMillis();
         Pattern pattern = Pattern.compile(regex);
         for (int i = 0; i < n; i++) {
