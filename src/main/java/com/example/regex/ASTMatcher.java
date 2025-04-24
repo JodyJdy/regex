@@ -35,6 +35,10 @@ public class ASTMatcher {
      * 记录表达式引用的层级，match模式下使用到
      */
     int expressionLevel = 0;
+    /**
+     * 记录预查的层级
+     */
+    int searchLevel = 0;
 
     /**
      * 记录 递归非贪婪匹配的最终结果
@@ -227,7 +231,7 @@ public class ASTMatcher {
             return false;
         }
         //这里要先检查 treeIsEnd
-        if (treeIsEnd(tree) && strIsEnd(i, end)) {
+        if (treeIsEnd(tree) && (searchLevel > 0 || strIsEnd(i, end))) {
             return true;
         }
         if (tree instanceof TerminalAst) {
@@ -428,6 +432,7 @@ public class ASTMatcher {
             } else if (ast.groupType == Group.NOT_CATCH_GROUP) {
                 //do nothing
             } else {
+                searchLevel++;
                 //预查不消耗字符，为了复用原先的ast，需要记录ast当前状态，用于还原。表达式调用同理
                 Ast result = null;
                 //记录好当前状态，并做好预查的准备
@@ -449,12 +454,12 @@ public class ASTMatcher {
                     }
                 } else if (ast.groupType == Group.BACKWARD_POSTIVE_SEARCH) {
                     ast.groupType = Group.NOT_CATCH_GROUP;
-                    if (findBackWard(str, 0, i - 1, i, ast)) {
+                    if (findBackWard(str, 0, i, i, ast)) {
                         result = next;
                     }
                 } else if (ast.groupType == Group.BACKWARD_NEGATIVE_SEARCH) {
                     ast.groupType = Group.NOT_CATCH_GROUP;
-                    if (!findBackWard(str, 0, i - 1, i, ast)) {
+                    if (!findBackWard(str, 0, i, i, ast)) {
                         result = next;
                     }
                 }
@@ -462,6 +467,7 @@ public class ASTMatcher {
                 ast.groupType = groupType;
                 Util.resetNext(ast, next);
                 matcherStatus.resumeStatus();
+                searchLevel--;
                 //如果 ast.getNext()也是一个预查节点，应该再次处理
                 return groupStartCheck(result, i, str);
             }
@@ -493,9 +499,6 @@ public class ASTMatcher {
      *返回一个查询结果
      */
     public FindResult getFindResult() {
-        if (matchMode) {
-            throw new RuntimeException("match模式，无法返回结果");
-        }
         return new FindResult(findResultStart,result);
     }
 
@@ -503,9 +506,6 @@ public class ASTMatcher {
      *递归非贪婪匹配模式下返回所有结果
      */
     public List<FindResult> getRecursiveNoGreedyFindResult() {
-        if (matchMode) {
-            throw new RuntimeException("match模式，无法返回结果");
-        }
         recursiveNoGreedyResults.add(new FindResult(findResultStart,result));
         List<FindResult> findResults = new ArrayList<>(recursiveNoGreedyResults);
         Collections.sort(findResults);
