@@ -20,7 +20,7 @@ class RegexToASTree {
     /**
      * 收集所有的组
      */
-    List<Ast> groupAst = new ArrayList<>();
+    List<Ast> groupAsts = new ArrayList<>();
 
     /**
      * 是否有递归非贪婪匹配， \\g<0>?,需要特殊处理结果集
@@ -122,7 +122,7 @@ class RegexToASTree {
             ast.setNext(Util.END_AST);
             tree2Linked(ast);
             //将自身当作编号为0的组
-            groupAst.add(0, ast);
+            groupAsts.add(0, ast);
             tree = ast;
         }
         return tree;
@@ -338,7 +338,7 @@ class RegexToASTree {
             next();
             asTree.groupNum = groupNum;
             asTree.groupType = groupType;
-            groupAst.add(asTree);
+            groupAsts.add(asTree);
             return asTree;
         }
         next();

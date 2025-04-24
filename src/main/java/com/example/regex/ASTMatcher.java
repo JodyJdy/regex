@@ -5,7 +5,7 @@ import java.util.*;
 public class ASTMatcher {
 
 
-    private final Ast regexTree;
+    private final Ast regex;
 
     /**
      * 所有的组
@@ -35,10 +35,8 @@ public class ASTMatcher {
      * 记录表达式引用的层级，match模式下使用到
      */
     int expressionLevel = 0;
-    /**
-     * 记录预查的层级
-     */
-    int searchLevel = 0;
+
+    private final String str;
 
     /**
      * 记录 递归非贪婪匹配的最终结果
@@ -59,15 +57,13 @@ public class ASTMatcher {
         return ast instanceof EndAst;
     }
 
-    public static ASTMatcher compile(String regex) {
-        Util.checkEmpty(regex);
-        return new ASTMatcher(new RegexToASTree(regex));
-    }
 
-    private ASTMatcher(RegexToASTree regexToASTree) {
-        this.regexTree = regexToASTree.astTree();
-        this.groupAsts = regexToASTree.groupAst;
+     ASTMatcher(ASTPattern pattern,String str) {
+         RegexToASTree regexToASTree = pattern.regexToASTree;
+         this.regex = regexToASTree.astTree();
+        this.groupAsts = regexToASTree.groupAsts;
         this.hasRecursiveNoGreedy = regexToASTree.hasRecursiveNoGreedy;
+        this.str = str;
     }
 
     /**
@@ -76,7 +72,7 @@ public class ASTMatcher {
      *
      * @param end         字符串的尾部位置
      */
-    private boolean findBackWard(String str, int searchLeft, int searchRight, int end, Ast ast) {
+    private boolean findBackWard(int searchLeft, int searchRight, int end, Ast ast) {
         int search = searchRight;
         while (searchLeft <= search) {
             ast.clearNumAstStatus();
@@ -92,13 +88,13 @@ public class ASTMatcher {
 
     /**
      * 起点范围在 [searchLeft,searchRight],终点为end
-     * 从 searchLeft ->  searchRight 查找， 找到一个符合的结果停止
+     * 调整起点 找到一个符合的结果停止
      *
      * @param searchLeft  左边的查找范围
      * @param searchRight 右边的查找范围
      * @param end         字符串的尾部位置
      */
-    boolean findForward(String str, int searchLeft, int searchRight, int end, Ast ast) {
+    boolean findForwardChangeStart(int searchLeft, int searchRight, int end, Ast ast) {
         int search = searchLeft;
         while (search <= searchRight) {
             ast.clearNumAstStatus();
@@ -112,28 +108,49 @@ public class ASTMatcher {
 
     }
 
+    /**
+     * 终点范围在 [searchRight,end],起点为searchLeft
+     *  调整终点 找到一个符合的结果停止
+     *
+     * @param searchLeft  左边的查找范围
+     * @param searchRight 右边的查找范围
+     * @param end         字符串的尾部位置
+     */
+    boolean findForwardChangeEnd(int searchLeft, int searchRight, int end, Ast ast) {
+        int search = searchRight;
+        while (search <= end) {
+            ast.clearNumAstStatus();
+            if (searchTree(ast, searchLeft, search, str)) {
+                findResultStart = searchLeft;
+                return true;
+            }
+            search++;
+        }
+        return false;
+    }
+
 
     /**
      * @param start 起始查找下标
      */
-    public boolean find(String str, int start) {
-        return findForward(str, start, str.length(), str.length(), regexTree);
+    public boolean find(int start) {
+        return findForwardChangeStart(start, str.length(), str.length(), regex);
     }
 
     /**
      *从尾部开始查找
      */
 
-    public boolean backwardFind(String str) {
-        return backwardFind(str, 0);
+    public boolean backwardFind() {
+        return backwardFind(0);
     }
 
     /**
      *将str中符合条件的内容替换成 replacement
      */
-    public String replaceFirst(String str,String replacement) {
+    public String replaceFirst(String replacement) {
         reset();
-        if (!find(str)) {
+        if (!find()) {
             return str;
         }
         StringBuilder sb = new StringBuilder();
@@ -152,11 +169,11 @@ public class ASTMatcher {
     /**
      *将str中符合条件的全部替换成replacement
      */
-    public String replaceAll(String str,String replacement) {
+    public String replaceAll(String replacement) {
         reset();
         StringBuilder sb = new StringBuilder();
 
-        if (find(str)) {
+        if (find()) {
             int start;
             int end;
             int lastAppendPosition = 0;
@@ -172,7 +189,7 @@ public class ASTMatcher {
                 if (nextSearch == start) {
                     nextSearch++;
                 }
-                if (!find(str, nextSearch)) {
+                if (!find(nextSearch)) {
                     break;
                 }
             } while (true);
@@ -185,35 +202,37 @@ public class ASTMatcher {
     /**
      * @param backEnd  反向查找的结尾位置
      */
-    public boolean backwardFind(String str, int backEnd) {
-        return findBackWard(str, backEnd, str.length(),str.length(), regexTree);
+    public boolean backwardFind(int backEnd) {
+        return findBackWard(backEnd, str.length(),str.length(), regex);
     }
 
     /**
      *默认从头开始查找
      */
-    public boolean find(String str) {
+    public boolean find() {
         if (matchMode) {
-            return isMatch(str);
+            return isMatch();
         }
-        return findForward(str, 0, str.length(), str.length(), regexTree);
+        return findForwardChangeStart(0, str.length(), str.length(), regex);
     }
 
-    public boolean isMatch(String str) {
+    public boolean isMatch() {
+        boolean tempMatchMode = this.matchMode;
+        this.matchMode = true;
         boolean recursiveNoGreedy = hasRecursiveNoGreedy;
         //match模式下 \\g<0>? 的非贪婪匹配不生效
         if(recursiveNoGreedy){
             hasRecursiveNoGreedy = false;
         }
-        boolean result =doMatch(str, 0, str.length(), regexTree);
+        boolean result =doMatch(0, str.length(), regex);
         if(recursiveNoGreedy){
             hasRecursiveNoGreedy = true;
         }
+        this.matchMode = tempMatchMode;
         return result;
     }
 
-    private boolean doMatch(String str, int searchStart, int end, Ast ast) {
-        matchMode = true;
+    private boolean doMatch(int searchStart, int end, Ast ast) {
         ast.clearNumAstStatus();
         return searchTree(ast, searchStart, end, str);
     }
@@ -231,7 +250,7 @@ public class ASTMatcher {
             return false;
         }
         //这里要先检查 treeIsEnd
-        if (treeIsEnd(tree) && (searchLevel > 0 || strIsEnd(i, end))) {
+        if (treeIsEnd(tree) && (strIsEnd(i, end))) {
             return true;
         }
         if (tree instanceof TerminalAst) {
@@ -432,42 +451,44 @@ public class ASTMatcher {
             } else if (ast.groupType == Group.NOT_CATCH_GROUP) {
                 //do nothing
             } else {
-                searchLevel++;
                 //预查不消耗字符，为了复用原先的ast，需要记录ast当前状态，用于还原。表达式调用同理
                 Ast result = null;
                 //记录好当前状态，并做好预查的准备
                 MatcherStatus matcherStatus = new MatcherStatus(this, ast);
                 Ast next = ast.getNext();
                 Util.resetNext(ast, Util.END_AST);
+                //预查使用匹配模式
+                boolean tempMatchMode = this.matchMode;
+                this.matchMode = true;
                 //查询前，需要将ast的groupType设置成非预查模式，不然会不断的进入这里的代码，
                 int groupType = ast.groupType;
                 if (ast.groupType == Group.FORWARD_POSTIVE_SEARCH) {
                     ast.groupType = Group.NOT_CATCH_GROUP;
-                    if (findForward(str, i, i, str.length(), ast)) {
+                    if (findForwardChangeEnd(i, i, str.length(), ast)) {
                         result = next;
                     }
                 } else if (ast.groupType == Group.FORWARD_NEGATIVE_SEARCH) {
                     ast.groupType = Group.NOT_CATCH_GROUP;
                     //和上面相反
-                    if (!findForward(str, i, i, str.length(), ast)) {
+                    if (!findForwardChangeEnd(i, i, str.length(), ast)) {
                         result = next;
                     }
                 } else if (ast.groupType == Group.BACKWARD_POSTIVE_SEARCH) {
                     ast.groupType = Group.NOT_CATCH_GROUP;
-                    if (findBackWard(str, 0, i, i, ast)) {
+                    if (findBackWard(0, i, i, ast)) {
                         result = next;
                     }
                 } else if (ast.groupType == Group.BACKWARD_NEGATIVE_SEARCH) {
                     ast.groupType = Group.NOT_CATCH_GROUP;
-                    if (!findBackWard(str, 0, i, i, ast)) {
+                    if (!findBackWard(0, i, i, ast)) {
                         result = next;
                     }
                 }
+                this.matchMode = tempMatchMode;
                 //状态还原
                 ast.groupType = groupType;
                 Util.resetNext(ast, next);
                 matcherStatus.resumeStatus();
-                searchLevel--;
                 //如果 ast.getNext()也是一个预查节点，应该再次处理
                 return groupStartCheck(result, i, str);
             }
