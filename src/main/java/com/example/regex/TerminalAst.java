@@ -24,6 +24,11 @@ class TerminalAst extends Ast implements Cloneable {
 
     private List<CharRange> charRanges;
 
+    /**
+     * 递归表达式匹配时的最大下标
+     */
+    int recursiveI = -1;
+
     TerminalAst(int type) {
         this.type = type;
     }
@@ -45,10 +50,6 @@ class TerminalAst extends Ast implements Cloneable {
         this.type = type;
     }
 
-    int getGroupNum() {
-        return Terminal.getGroupNum(type);
-    }
-
     boolean isGroupType() {
         return Terminal.isGroupType(type);
     }
@@ -61,7 +62,7 @@ class TerminalAst extends Ast implements Cloneable {
      * 递归调用自身的类型
      */
     boolean isRecursiveType() {
-        return isExpressionType() && getGroupNum() == 0;
+        return isExpressionType() && getReferenceGroupNum() == 0;
     }
 
     /**
@@ -176,11 +177,11 @@ class TerminalAst extends Ast implements Cloneable {
      * 处理 分组引用
      */
     int matchGroup(String str, int i, List<Ast> groups) {
-        int groupNum = Terminal.getGroupNum(type);
-        if (groupNum > groups.size()) {
+        int referenceGroupNum = getReferenceGroupNum();
+        if (referenceGroupNum > groups.size()) {
             throw new RuntimeException("groupNum dose not exist");
         }
-        Ast group = groups.get(groupNum);
+        Ast group = groups.get(referenceGroupNum);
         //未成功捕获
         if(group.groupStart == -1 || group.groupEnd == -1){
            return  -1;
@@ -204,9 +205,8 @@ class TerminalAst extends Ast implements Cloneable {
     int matchExpression(int i, List<Ast> groups, int end, ASTMatcher astMatcher) {
         Ast ast;
         //获取引用的表达式的下标
-        int groupNum = Terminal.getGroupNum(type);
         astMatcher.expressionLevel++;
-        ast = groups.get(groupNum);
+        ast = groups.get(getReferenceGroupNum());
         //记录调用前的状态
         MatcherStatus matcherStatus = new MatcherStatus(astMatcher, ast);
         Ast next = ast.getNext();
@@ -261,4 +261,13 @@ class TerminalAst extends Ast implements Cloneable {
             return ch >= left && ch <= right;
         }
     }
+
+    /**
+     *获取应用的组的编号：
+     *  组引用/表达式应用
+     */
+    public int getReferenceGroupNum(){
+       return Terminal.getReferenceGroupNum(type);
+    }
+
 }

@@ -38,6 +38,8 @@ public class ASTMatcher {
 
     private final String str;
 
+    private  Ast lastSearchNode = null;
+
     /**
      * 记录 递归非贪婪匹配的最终结果
      */
@@ -262,6 +264,14 @@ public class ASTMatcher {
                 count = terminalAst.matchGroup(str,i, groupAsts);
                 //处理表达式引用和递归引用
             } else if (terminalAst.isExpressionType()) {
+                //递归引用
+                if (terminalAst.isRecursiveType()) {
+                    if (terminalAst.recursiveI >= i) {
+                        return searchTree(getNextAndGroupEndCheck(terminalAst, i ), i , end, str);
+                    } else{
+                        terminalAst.recursiveI = i;
+                    }
+                }
                 count = terminalAst.matchExpression(i, groupAsts, end, this);
             } else {
                 //普通字符的匹配
@@ -271,9 +281,11 @@ public class ASTMatcher {
             if (count < 0) {
                 return false;
             }
+            lastSearchNode = tree;
             // 匹配成功，继续搜索
             return searchTree(getNextAndGroupEndCheck(terminalAst, i + count), i + count, end, str);
         }
+        lastSearchNode = tree;
         if (tree instanceof CatAst) {
             CatAst cat = (CatAst) tree;
             return searchTree(cat.ast.get(0), i, end, str);

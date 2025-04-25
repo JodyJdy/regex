@@ -90,7 +90,7 @@ class Terminal {
     static boolean isGroupType(int type){
         return (type & GROUP_CAPTURE) != 0;
     }
-    static int getGroupNum(int type){
+    static int getReferenceGroupNum(int type){
         return type & GROUP_NUM_MAST;
     }
     static boolean isExpression(int type){
