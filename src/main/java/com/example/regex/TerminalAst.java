@@ -7,7 +7,7 @@ public class TerminalAst extends Ast implements Cloneable {
     /**
      * 记录TerminalAst的类型
      */
-    int type;
+    final int type;
     Character c;
     /**
      * 多个普通字符连接在一起，用于减少ast节点的数量
@@ -67,13 +67,22 @@ public class TerminalAst extends Ast implements Cloneable {
     /**
      * 两种情况 单词字符跟着非单词字符 和  非单词字符跟着单词字符， 相邻的两个非单词字符不是单词边界
      * 相邻的两个单词字符也不是单词边界
+     *
+     * !!!! 单词边界也不考虑 end
      */
-    private int isWordBorder(String str, int i, int end) {
+    private int isWordBorder(String str, int i) {
         //开始和结尾处的单词边界
-        if (i == 0 && !str.isEmpty() && end != 0 && Terminal.isw(str.charAt(i))) {
-            return 0;
+        if (i == 0) {
+            // "" 不是单词边界
+            if (str.isEmpty()) {
+               return -1;
+            }
+            // "a"   匹配  \\ba
+            if(Terminal.isw(str.charAt(i))){
+                return 0;
+            }
         }
-        if (i == str.length() || i == end) {
+        if (i == str.length()) {
             if (Terminal.isw(str.charAt(i - 1))) {
                 return 0;
             }
@@ -95,11 +104,11 @@ public class TerminalAst extends Ast implements Cloneable {
     int match(String str, int i, int end) {
         //边界符号，匹配成功返回0，因为边界符号不占空间
         if (Terminal.isB(type) || Terminal.isb(type)) {
-            int result = isWordBorder(str, i, end);
+            int result = isWordBorder(str, i);
             if (Terminal.isb(type)) {
                 return result;
             }
-            //和单词边界相反
+            //和单词边界相反， 由于存在复合类型 [\b\B], 这里的 Terminal.isB() 判断是必须的
             if (Terminal.isB(type)) {
                 return result == 0 ? -1 : 0;
             }
