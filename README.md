@@ -17,6 +17,7 @@
 * (?<=)
 * (?!)
 * (?<!)
+* (?<名称>) 分组命名
 * \s \S
 * \d \D
 * \w \W
@@ -54,3 +55,9 @@ String str1 = matcher.replaceFirst("你好"); //将第一个出现的进行替�
 String str2 = matcher.replaceAll("你好");  // 将所有出现的进行替换
 ```
 
+## 5. group(int), group(name) 获取分组
+```java
+String g = matcher.group(0);
+String g1 = matcher.group("group");
+
+```
