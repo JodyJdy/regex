@@ -38,8 +38,6 @@ public class ASTMatcher {
 
     private final String str;
 
-    private  Ast lastSearchNode = null;
-
     /**
      * 记录 递归非贪婪匹配的最终结果
      */
@@ -281,11 +279,9 @@ public class ASTMatcher {
             if (count < 0) {
                 return false;
             }
-            lastSearchNode = tree;
             // 匹配成功，继续搜索
             return searchTree(getNextAndGroupEndCheck(terminalAst, i + count), i + count, end, str);
         }
-        lastSearchNode = tree;
         if (tree instanceof CatAst) {
             CatAst cat = (CatAst) tree;
             return searchTree(cat.ast.get(0), i, end, str);
