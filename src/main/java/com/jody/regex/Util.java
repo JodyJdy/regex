@@ -1,4 +1,4 @@
-package com.example.regex;
+package com.jody.regex;
 
 import java.util.ArrayList;
 import java.util.List;

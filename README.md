@@ -29,7 +29,7 @@
 ## 1.编译正则表达式
 
 ```java
-import com.example.regex.ASTPattern;
+import com.jody.regex.ASTPattern;
 
 ASTPattern astPattern = ASTPattern.compile("[\u4E00-\u9FA5]+");
 ASTMatcher matcher = astPattern.matcher("你好，世界");
