@@ -66,7 +66,7 @@ class RegexToASTree {
     /**
      * 将 抽象语法树，调整成 链表， 链表的顺序就是 搜索时的顺序，使用Ast的next节点调整
      */
-    private void tree2Linked(Ast ast) {
+    private static void tree2Linked(Ast ast) {
         if (ast.groupNum != 0) {
             ast.nextLeaveGroup = true;
             ast.leaveGroupNum = ast.groupNum;
@@ -251,10 +251,10 @@ class RegexToASTree {
         if (ch == '\\') {
             next();
             ch = getCh();
-            //reference groupNum
+            //引用组
             if (Terminal.isNumber(ch)) {
                 int groupCount = getNum();
-                terminator = new TerminalAst(Terminal.GROUP | groupCount);
+                terminator = new TerminalAst(Terminal.GROUP_CAPTURE | groupCount);
             } else {
                 int type = getTerminalType(ch);
                 if (type == Terminal.SIMPLE) {
@@ -315,6 +315,7 @@ class RegexToASTree {
             int groupNum = ++groupCount;
             int groupType = Group.CATCH_GROUP;
             next();
+            String groupName = null;
             if (getCh() == '?') {
                 next();
                 switch (getCh()){
@@ -328,12 +329,17 @@ class RegexToASTree {
                         } else if (getCh() == '!') {
                             groupType = Group.BACKWARD_NEGATIVE_SEARCH;
                             break;
+                        } else{
+                            //分组命名
+                            groupName = readGroupName();
+                            break;
                         }
                     default:throw new RuntimeException("error groupType");
                 }
                 next();
             }
             Ast asTree = orTree();
+            asTree.groupName = groupName;
             next();
             asTree.groupNum = groupNum;
             asTree.groupType = groupType;
@@ -343,7 +349,19 @@ class RegexToASTree {
         next();
         return new TerminalAst(ch, Terminal.SIMPLE);
     }
-
+    private String readGroupName() {
+        StringBuilder sb = new StringBuilder();
+        if (!Terminal.isUpper(getCh()) && !Terminal.isLower(getCh())) {
+            throw new RuntimeException("分组命名以大小写字母开头");
+        }
+        do {
+            sb.append((getCh()));
+            next();
+        } while (Terminal.isUpper(getCh()) || Terminal.isLower(getCh()) || Terminal.isNumber(getCh()));
+        if (getCh() != '>')
+            throw new RuntimeException("分组命名以>结尾");
+        return sb.toString();
+    }
     private int getNum() {
         int num = 0;
         while (!isEnd() && Terminal.isNumber(getCh())) {

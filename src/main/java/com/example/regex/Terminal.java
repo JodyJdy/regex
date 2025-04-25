@@ -43,7 +43,7 @@ class Terminal {
      * 分组引用， 引用的组的编号存储在低7位
      * groupNum catch
      */
-    final static int GROUP = 1<<8;
+    final static int GROUP_CAPTURE = 1<<8;
     /**
      * 分组引用时 低7位存储匹配的组 groupNum
      */
@@ -88,7 +88,7 @@ class Terminal {
         return (type & COMPOSITE) != 0;
     }
     static boolean isGroupType(int type){
-        return (type & GROUP) != 0;
+        return (type & GROUP_CAPTURE) != 0;
     }
     static int getGroupNum(int type){
         return type & GROUP_NUM_MAST;
@@ -129,8 +129,21 @@ class Terminal {
     private static boolean iswType(int type){
         return  (type & w) != 0;
     }
-    static boolean isw(char c){
-        return c >= '0' && c <= '9' || c >='a' && c <='z' || c >='A' && c <='Z' || c =='_';
+
+    static boolean isw(char c) {
+        return isUnder(c) || isUpper(c) || isLower(c) || isNumber(c);
+    }
+
+    static boolean isUnder(char c) {
+        return c == '_';
+    }
+
+    static boolean isLower(char c) {
+        return c >= 'a' && c <= 'z';
+    }
+
+    static boolean isUpper(char c) {
+        return c >= 'A' && c <= 'Z';
     }
     private static boolean isS(char c){
         return !iss(c);

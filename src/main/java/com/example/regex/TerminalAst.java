@@ -3,7 +3,7 @@ package com.example.regex;
 import java.util.List;
 import java.util.Set;
 
-public class TerminalAst extends Ast implements Cloneable {
+class TerminalAst extends Ast implements Cloneable {
     /**
      * 记录TerminalAst的类型
      */
@@ -181,6 +181,10 @@ public class TerminalAst extends Ast implements Cloneable {
             throw new RuntimeException("groupNum dose not exist");
         }
         Ast group = groups.get(groupNum);
+        //未成功捕获
+        if(group.groupStart == -1 || group.groupEnd == -1){
+           return  -1;
+        }
         String catchStr = str.substring(group.groupStart, group.groupEnd);
         if (i + catchStr.length() <= str.length()) {
             for (int x = 0; x < catchStr.length(); x++) {

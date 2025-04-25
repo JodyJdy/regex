@@ -45,14 +45,10 @@ class MatcherStatus {
      * 用于存储 Ast牵扯到的所有状态
      */
     static class AstStatus{
-        int groupStart;
-        int groupEnd;
         int circleNum;
         int maxI;
 
         AstStatus(Ast ast){
-            this.groupStart = ast.groupStart;
-            this.groupEnd = ast.groupEnd;
             if(ast instanceof NumAst){
                 NumAst numAst = (NumAst)ast;
                 this.circleNum = numAst.circleNum;

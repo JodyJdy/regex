@@ -463,24 +463,21 @@ public class ASTMatcher {
                 this.matchMode = true;
                 //查询前，需要将ast的groupType设置成非预查模式，不然会不断的进入这里的代码，
                 int groupType = ast.groupType;
-                if (ast.groupType == Group.FORWARD_POSTIVE_SEARCH) {
-                    ast.groupType = Group.NOT_CATCH_GROUP;
+                ast.groupType = Group.CATCH_GROUP;
+                if (groupType == Group.FORWARD_POSTIVE_SEARCH) {
                     if (findForwardChangeEnd(i, i, str.length(), ast)) {
                         result = next;
                     }
-                } else if (ast.groupType == Group.FORWARD_NEGATIVE_SEARCH) {
-                    ast.groupType = Group.NOT_CATCH_GROUP;
+                } else if (groupType == Group.FORWARD_NEGATIVE_SEARCH) {
                     //和上面相反
                     if (!findForwardChangeEnd(i, i, str.length(), ast)) {
                         result = next;
                     }
-                } else if (ast.groupType == Group.BACKWARD_POSTIVE_SEARCH) {
-                    ast.groupType = Group.NOT_CATCH_GROUP;
+                } else if (groupType == Group.BACKWARD_POSTIVE_SEARCH) {
                     if (findBackWard(0, i, i, ast)) {
                         result = next;
                     }
-                } else if (ast.groupType == Group.BACKWARD_NEGATIVE_SEARCH) {
-                    ast.groupType = Group.NOT_CATCH_GROUP;
+                } else if (groupType == Group.BACKWARD_NEGATIVE_SEARCH) {
                     if (!findBackWard(0, i, i, ast)) {
                         result = next;
                     }
@@ -533,4 +530,39 @@ public class ASTMatcher {
         Collections.sort(findResults);
         return findResults;
     }
+
+    /**
+     *根据组编号返回捕获的组
+     */
+    public String group(int groupNum) {
+        // \\1 捕获第一个组， 访问时，则使用 group(0)
+        groupNum++;
+        if(groupNum == groupAsts.size()){
+            return null;
+        }
+        Ast ast = groupAsts.get(groupNum);
+        if(ast.groupStart == -1 || ast.groupEnd == -1){
+            return null;
+        }
+        return str.substring(ast.groupStart, ast.groupEnd);
+    }
+
+    /**
+     *根据名称返回捕获的组
+     */
+    public String group(String groupName) {
+        if (groupName == null || groupName.isEmpty()) {
+            return null;
+        }
+        for (Ast ast : groupAsts) {
+           if(groupName.equals(ast.groupName)){
+               if(ast.groupStart == -1 || ast.groupEnd == -1){
+                   return null;
+               }
+               return str.substring(ast.groupStart, ast.groupEnd);
+           }
+        }
+        return null;
+    }
+
 }

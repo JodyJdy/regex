@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class CatAst extends Ast implements Cloneable {
+class CatAst extends Ast implements Cloneable {
     List<Ast> ast;
     CatAst(List<Ast> ast) {
         this.ast = ast;

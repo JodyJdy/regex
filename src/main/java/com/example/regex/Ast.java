@@ -17,14 +17,18 @@ abstract class Ast implements Cloneable{
      */
     int groupNum;
     /**
+     * 分组命名
+     */
+    String groupName;
+    /**
      * 分组类型
      */
     int groupType;
     /**
      * 捕获到的分组
      */
-    int groupStart;
-    int groupEnd;
+    int groupStart = -1;
+    int groupEnd = -1;
     /**
      * 跳转到下个节点时，是否离开了一个group的范围
      */
@@ -61,8 +65,5 @@ abstract class Ast implements Cloneable{
      * 还原 当前节点的状态
      */
     void loadStatus(Map<Ast,MatcherStatus.AstStatus> map){
-        MatcherStatus.AstStatus status = map.get(this);
-        this.groupStart = status.groupStart;
-        this.groupEnd = status.groupEnd;
     }
 }
