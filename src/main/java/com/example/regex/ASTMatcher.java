@@ -196,8 +196,9 @@ public class ASTMatcher {
             if (end < str.length()) {
                 sb.append(str, end, str.length());
             }
+            return sb.toString();
         }
-        return sb.toString();
+        return str;
     }
     /**
      * @param backEnd  反向查找的结尾位置
@@ -258,10 +259,10 @@ public class ASTMatcher {
             int count;
             //处理反向引用
             if (terminalAst.isGroupType()) {
-                count = terminalAst.matchGroup(str, i, groupAsts);
+                count = terminalAst.matchGroup(str,i, groupAsts);
                 //处理表达式引用和递归引用
             } else if (terminalAst.isExpressionType()) {
-                count = terminalAst.matchExpression(str, i, groupAsts, end, this);
+                count = terminalAst.matchExpression(i, groupAsts, end, this);
             } else {
                 //普通字符的匹配
                 count = terminalAst.match(str, i, end);

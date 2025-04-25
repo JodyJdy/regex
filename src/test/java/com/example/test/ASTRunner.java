@@ -15,9 +15,12 @@ public class ASTRunner {
         testReplace();
         //测试递归
         testRecursive();
+        //性能测试， 匹配邮箱的场景性能比原生的要高
+        String emailRex = "[\\w!#$%&'*+/=?^_`{|}~-]+(\\.[\\w!#$%&'*+/=?^_`{|}~-]+)*@([\\w]([\\w-]*[\\w])?\\.)+[\\w]([\\w-]*[\\w])?";
+        String email = "abc@qq.com";
+        performanceCompare(emailRex,email,1000000);
         //性能测试
         performanceCompare("\\babc\\b","abc",1000000);
-
     }
 
     /**
@@ -102,8 +105,9 @@ public class ASTRunner {
     public static void performanceCompare(String regex, String str, int n) {
         long start = System.currentTimeMillis();
         Pattern pattern = Pattern.compile(regex);
+        Matcher matcher2 = pattern.matcher(str);
         for (int i = 0; i < n; i++) {
-            boolean x = pattern.matcher(str).matches();
+            boolean x = matcher2.matches();
         }
         long end = System.currentTimeMillis();
         System.out.println("原生Regex:" + (end - start));

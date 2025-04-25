@@ -111,21 +111,20 @@ class RegexToASTree {
         }
     }
 
-    /**
-     * 存储最终的结构
-     */
-    private Ast tree;
+    private void reset(){
+        i = 0;
+        groupCount = 0;
+        groupAsts = new ArrayList<>();
+    }
 
     Ast astTree() {
-        if (tree == null) {
-            Ast ast = orTree();
-            ast.setNext(Util.END_AST);
-            tree2Linked(ast);
-            //将自身当作编号为0的组
-            groupAsts.add(0, ast);
-            tree = ast;
-        }
-        return tree;
+        reset();
+        Ast ast = orTree();
+        ast.setNext(Util.END_AST);
+        tree2Linked(ast);
+        //将自身当作编号为0的组
+        groupAsts.add(0, ast);
+        return ast;
     }
 
     private Ast orTree() {

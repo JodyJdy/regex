@@ -104,6 +104,7 @@ public class TerminalAst extends Ast implements Cloneable {
                 return result == 0 ? -1 : 0;
             }
         }
+        // 目前仅以str字符串开始和结尾来判断 ^ $
         // 开始符号
         if (Terminal.isStart(type)) {
             if (i == 0) {
@@ -113,7 +114,7 @@ public class TerminalAst extends Ast implements Cloneable {
         }
         //结束符号
         if (Terminal.isEnd(type)) {
-            if (i >= end || i >= str.length()) {
+            if (i >= str.length()) {
                 return 0;
             }
             return -1;
@@ -187,7 +188,7 @@ public class TerminalAst extends Ast implements Cloneable {
     /**
      * 处理表达式引用
      */
-    int matchExpression(String str, int i, List<Ast> groups, int end, ASTMatcher astMatcher) {
+    int matchExpression(int i, List<Ast> groups, int end, ASTMatcher astMatcher) {
         Ast ast;
         //获取引用的表达式的下标
         int groupNum = Terminal.getGroupNum(type);
