@@ -26,18 +26,22 @@
 
 暴漏出的使用的类为ASTMatcher，使用方式为：
 ## 1.编译正则表达式
+
 ```java
-ASTMatcher matcher = ASTMatcher.compile("[\u4E00-\u9FA5]");
+import com.example.regex.ASTPattern;
+
+ASTPattern astPattern = ASTPattern.compile("[\u4E00-\u9FA5]+");
+ASTMatcher matcher = astPattern.matcher("你好，世界");
 ```
 ## 2. match 匹配
-boolean result = matcher.isMatch("你好，世界");
+boolean result = matcher.isMatch();
 
 ## 3. find() 查找
 ```java
-boolean re1 = matcher.find("hello");
-boolean re2 = matcher.find("hello",i); //从下标i开始查找
-boolean re3 = matcher.backwardFind("hello");//从尾部开始查找
-boolean re4 = matcher.backwardFind("hello",end); //以下标end作为尾部，进行查找
+boolean re1 = matcher.find();
+boolean re2 = matcher.find(i); //从下标i开始查找
+boolean re3 = matcher.backwardFind();//从尾部开始查找
+boolean re4 = matcher.backwardFind(end); //以下标end作为尾部，进行查找
 FindResult result = matcher.getFindResult(); /获取查找结果的区间
 特殊情况： 对于 \g<0>? 递归非贪婪匹配，会返回多个查找区间，使用
 List<FindResult> resultList = matcher.getRecursiveNoGreedyFindResult();

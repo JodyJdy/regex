@@ -459,7 +459,6 @@ public class ASTMatcher {
                 Ast next = ast.getNext();
                 Util.resetNext(ast, Util.END_AST);
                 //预查使用匹配模式
-                boolean tempMatchMode = this.matchMode;
                 this.matchMode = true;
                 //查询前，需要将ast的groupType设置成非预查模式，不然会不断的进入这里的代码，
                 int groupType = ast.groupType;
@@ -482,7 +481,6 @@ public class ASTMatcher {
                         result = next;
                     }
                 }
-                this.matchMode = tempMatchMode;
                 //状态还原
                 ast.groupType = groupType;
                 Util.resetNext(ast, next);
