@@ -15,6 +15,8 @@ public class ASTRunner {
         testReplace();
         //测试递归
         testRecursive();
+        //测试分组
+        testGroup();
         //性能测试， 匹配邮箱的场景性能比原生的要高
         String emailRex = "[\\w!#$%&'*+/=?^_`{|}~-]+(\\.[\\w!#$%&'*+/=?^_`{|}~-]+)*@([\\w]([\\w-]*[\\w])?\\.)+[\\w]([\\w-]*[\\w])?";
         String email = "abc@qq.com";
@@ -27,6 +29,7 @@ public class ASTRunner {
      * 测试，主要是高级特性
      */
     public static void test() {
+        System.out.println("--------------------test-------------------");
         //匹配中文
         ASTPattern utfPattern = ASTPattern.compile("[\u4E00-\u9FA5]");
         ASTMatcher utfMatcher = utfPattern.matcher("你");
@@ -71,6 +74,7 @@ public class ASTRunner {
      * match不支持 递归引用， find支持
      */
     public static void testRecursive(){
+        System.out.println("--------------------testRecursive-------------------");
         //测试 递归贪婪匹配
         ASTPattern astPattern = ASTPattern.compile("\\{\\}|\\{('\\w+':('\\w+'|\\d+|\\g<0>),)+'\\w+':('\\w+'|\\d+|\\g<0>)}|\\{'\\w+':('\\w+'|\\d+|\\g<0>)\\}");
         ASTMatcher matcher = astPattern.matcher("{'key1':'value1','key2':123,'key3':{},'key4':{'key5':'value5'}}");
@@ -91,6 +95,7 @@ public class ASTRunner {
      *测试 replace
      */
     public static void testReplace(){
+        System.out.println("--------------------testReplace-------------------");
         Pattern p = Pattern.compile("(?:(?!0000)[0-9]{4}-(?:(?:0[1-9]|1[0-2])-(?:0[1-9]|1[0-9]|2[0-8])|(?:0[13-9]|1[0-2])-(?:29|30)|(?:0[13578]|1[02])-31)|(?:[0-9]{2}(?:0[48]|[2468][048]|[13579][26])|(?:0[48]|[2468][048]|[13579][26])00)-02-29)");
         Matcher matcher = p.matcher("  2022-06-30 --  2022-06-30  bbb -- ");
         ASTPattern astMatcher = ASTPattern.compile("(?:(?!0000)[0-9]{4}-(?:(?:0[1-9]|1[0-2])-(?:0[1-9]|1[0-9]|2[0-8])|(?:0[13-9]|1[0-2])-(?:29|30)|(?:0[13578]|1[02])-31)|(?:[0-9]{2}(?:0[48]|[2468][048]|[13579][26])|(?:0[48]|[2468][048]|[13579][26])00)-02-29)");
@@ -98,11 +103,24 @@ public class ASTRunner {
         String str2 = astMatcher.matcher("  2022-06-30 --  2022-06-30  bbb -- ").replaceAll( "bb");
         System.out.println(str1.equals(str2));
     }
+    /**
+     * 测试 分组
+     */
+    public static void testGroup(){
+        System.out.println("--------------------testGroup-------------------");
+        ASTPattern pattern = ASTPattern.compile("(a)(b)(c)(?<hello>d)");
+        ASTMatcher matcher = pattern.matcher("abcdef");
+        matcher.find();
+        System.out.println(matcher.group(0));
+        System.out.println(matcher.group(1));
+        System.out.println(matcher.group("hello"));
+    }
 
     /**
      * 和Java自带的Regex进行性能对比
      */
     public static void performanceCompare(String regex, String str, int n) {
+        System.out.println("--------------------testPerformance-------------------");
         long start = System.currentTimeMillis();
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher2 = pattern.matcher(str);
