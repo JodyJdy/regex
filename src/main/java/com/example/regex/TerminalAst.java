@@ -212,7 +212,7 @@ class TerminalAst extends Ast implements Cloneable {
         Ast next = ast.getNext();
         Util.resetNext(ast, Util.END_AST);
         //查询
-        int result = 0;
+        int result = -1;
         if (astMatcher.findForwardChangeStart(i, i, end, ast)) {
             result = astMatcher.result - i;
             storeRecursive(astMatcher);
