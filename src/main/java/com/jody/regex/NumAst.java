@@ -11,17 +11,9 @@ public class NumAst extends Ast implements Cloneable{
 
     Ast ast;
     /**
-     * 记录节点循环的次数
-     */
-    int circleNum;
-    /**
      * 默认是贪婪模式 读取最长的匹配项目
      */
     boolean greedy = true;
-    /**
-     *记录，已经处理过的最大状态
-     */
-    int maxI = -1;
 
     String type;
     /**
@@ -62,22 +54,4 @@ public class NumAst extends Ast implements Cloneable{
         return numAst;
     }
 
-    @Override
-    void clearNumAstStatus() {
-        circleNum = 0;
-        maxI = -1;
-    }
-    @Override
-    void storeStatus(Map<Ast, MatcherStatus.AstStatus> map) {
-        map.put(this,new MatcherStatus.AstStatus(this));
-        ast.storeStatus(map);
-    }
-
-    @Override
-    void loadStatus(Map<Ast, MatcherStatus.AstStatus> map) {
-        super.loadStatus(map);
-        MatcherStatus.AstStatus status = map.get(this);
-        this.circleNum = status.circleNum;
-        this.maxI = status.maxI;
-    }
 }

@@ -25,9 +25,9 @@ class TerminalAst extends Ast implements Cloneable {
     private List<CharRange> charRanges;
 
     /**
-     * 递归表达式匹配时的最大下标
+     *递归表达式的编号
      */
-    int recursiveI = Util.NONE;
+    int recursiveNo = Util.NONE;
 
     TerminalAst(int type) {
         this.type = type;
@@ -272,5 +272,6 @@ class TerminalAst extends Ast implements Cloneable {
     public int getReferenceGroupNum(){
        return Terminal.getReferenceGroupNum(type);
     }
+
 
 }

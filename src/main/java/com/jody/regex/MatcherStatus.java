@@ -8,15 +8,17 @@ import java.util.Map;
  */
 class MatcherStatus {
 
-    /**
-     * 存储ast牵扯到的所有状态
-     */
-    private final Map<Ast,AstStatus> astStatusMap = new HashMap<>();
 
     private final ASTMatcher astMatcher;
     private final int searchStart;
     private final int findResult;
     private final boolean matchMood;
+
+    int[] numAstCircleNum;
+    /**
+     *记录numASt已经处理过的最大状态
+     */
+    int[] numAstMaxI;
 
     private final Ast searchAst;
 
@@ -28,34 +30,33 @@ class MatcherStatus {
         astMatcher.findResultStart = astMatcher.result = 0;
         this.astMatcher = astMatcher;
         this.searchAst =searchAst;
-        //存储ast的状态
-        searchAst.storeStatus(astStatusMap);
+        //存储ast的状态，例如： maxI, circleNum
+        if (searchAst.nodeMaxNumAstNo != Util.NONE) {
+            int len = searchAst.nodeMaxNumAstNo - searchAst.nodeMinNumAstNo+1;
+            numAstCircleNum = new int[len];
+            numAstMaxI = new int[len];
+            int nodeMinNumAstNo = searchAst.nodeMinNumAstNo;
+            for (int i = 0; i < len; i++) {
+                numAstMaxI[i] = astMatcher.numAstMaxI[nodeMinNumAstNo + i];
+                numAstCircleNum[i] = astMatcher.numAstCircleNum[nodeMinNumAstNo + i];
+                astMatcher.numAstMaxI[nodeMinNumAstNo + i] = Util.NONE;
+                astMatcher.numAstCircleNum[nodeMinNumAstNo + i] = 0;
+            }
+        }
     }
 
     void resumeStatus(){
         astMatcher.findResultStart = this.searchStart;
         astMatcher.result = this.findResult;
         astMatcher.matchMode = this.matchMood;
-        this.searchAst.loadStatus(astStatusMap);
-    }
-
-
-
-    /**
-     * 用于存储 Ast牵扯到的所有状态
-     */
-    static class AstStatus{
-        int circleNum;
-        int maxI;
-
-        AstStatus(Ast ast){
-            if(ast instanceof NumAst){
-                NumAst numAst = (NumAst)ast;
-                this.circleNum = numAst.circleNum;
-                this.maxI = numAst.maxI;
-                numAst.circleNum = 0;
-                numAst.maxI = -1;
+        // 状态还原
+        if (searchAst.nodeMaxNumAstNo != Util.NONE) {
+            int nodeMinNumAstNo = searchAst.nodeMinNumAstNo;
+            for (int i = 0; i < numAstMaxI.length; i++) {
+                astMatcher.numAstMaxI[nodeMinNumAstNo + i] = numAstMaxI[i];
+                astMatcher.numAstCircleNum[nodeMinNumAstNo + i] = numAstCircleNum[i];
             }
         }
     }
+
 }

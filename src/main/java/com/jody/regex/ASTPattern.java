@@ -1,11 +1,17 @@
 package com.jody.regex;
 
 
+import java.util.List;
+
 public class ASTPattern {
     final RegexToASTree regexToASTree;
+    final Ast ast;
+    final List<Ast> groups;
 
     public ASTPattern(RegexToASTree regexToASTree) {
         this.regexToASTree = regexToASTree;
+        this.ast = regexToASTree.astTree();
+        this.groups = regexToASTree.groupAsts;
     }
 
     public static ASTPattern compile(String regex) {

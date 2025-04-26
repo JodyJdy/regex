@@ -66,6 +66,12 @@ public class ASTMatcher {
      */
     final int[] numAstMaxI;
 
+    /**
+     *记录递归节点的最大状态
+     */
+
+    int[] recursiveI = null;
+
 
 
     private boolean strIsEnd(int i, int end) {
@@ -85,20 +91,22 @@ public class ASTMatcher {
 
      ASTMatcher(ASTPattern pattern,String str) {
          RegexToASTree regexToASTree = pattern.regexToASTree;
-         this.regex = regexToASTree.astTree();
-         this.groupAsts = regexToASTree.groupAsts;
+         this.regex = pattern.ast;
+         this.groupAsts = pattern.groups;
          this.hasRecursiveNoGreedy = regexToASTree.hasRecursiveNoGreedy;
          this.str = str;
          groupCatch = new int[groupAsts.size() * 2];
          for (int i = 0; i < groupAsts.size() * 2; i++) {
              groupCatch[i] = Util.NONE;
          }
-
          numAstMaxI = new int[regexToASTree.numAstCount];
          numAstCircleNum = new int[regexToASTree.numAstCount];
          for (int i = 0; i < regexToASTree.numAstCount; i++) {
              numAstMaxI[i] = Util.NONE;
              numAstCircleNum[i] = 0;
+         }
+         if (regexToASTree.recursiveCount != 0) {
+             recursiveI = new int[regexToASTree.recursiveCount];
          }
     }
 
@@ -111,7 +119,7 @@ public class ASTMatcher {
     private boolean findBackWard(int searchLeft, int searchRight, int end, Ast ast) {
         int search = searchRight;
         while (searchLeft <= search) {
-            ast.clearNumAstStatus();
+            clearNumAstStatus(ast);
             if (searchTree(ast, search, end, str)) {
                 // record
                 findResultStart = search;
@@ -133,7 +141,7 @@ public class ASTMatcher {
     boolean findForwardChangeStart(int searchLeft, int searchRight, int end, Ast ast) {
         int search = searchLeft;
         while (search <= searchRight) {
-            ast.clearNumAstStatus();
+            clearNumAstStatus(ast);
             if (searchTree(ast, search, end, str)) {
                 findResultStart = search;
                 return true;
@@ -155,7 +163,7 @@ public class ASTMatcher {
     boolean findForwardChangeEnd(int searchLeft, int searchRight, int end, Ast ast) {
         int search = searchRight;
         while (search <= end) {
-            ast.clearNumAstStatus();
+            clearNumAstStatus(ast);
             if (searchTree(ast, searchLeft, search, str)) {
                 findResultStart = searchLeft;
                 return true;
@@ -270,7 +278,7 @@ public class ASTMatcher {
     }
 
     private boolean doMatch(int searchStart, int end, Ast ast) {
-        ast.clearNumAstStatus();
+        clearNumAstStatus(ast);
         return searchTree(ast, searchStart, end, str);
     }
 
@@ -300,10 +308,10 @@ public class ASTMatcher {
             } else if (terminalAst.isExpressionType()) {
                 //递归引用
                 if (terminalAst.isRecursiveType()) {
-                    if (terminalAst.recursiveI >= i) {
-                        return searchTree(getNextAndGroupEndCheck(terminalAst, i ), i , end, str);
-                    } else{
-                        terminalAst.recursiveI = i;
+                    if (recursiveI[terminalAst.recursiveNo] >= i) {
+                        return searchTree(getNextAndGroupEndCheck(terminalAst, i), i, end, str);
+                    } else {
+                        recursiveI[terminalAst.recursiveNo] = i;
                     }
                 }
                 count = terminalAst.matchExpression(i, groupAsts, end, this);
@@ -356,10 +364,10 @@ public class ASTMatcher {
      * 遇到之前的状态，不应该再处理
      */
     private boolean shouldReturn(NumAst numAst, int i) {
-        if (numAst.maxI >= i) {
+        if (numAstMaxI[numAst.numAstNo] >= i) {
             return true;
         }
-        numAst.maxI = i;
+        numAstMaxI[numAst.numAstNo] = i;
         return false;
     }
 
@@ -372,7 +380,7 @@ public class ASTMatcher {
         }
         //find模式 且是贪心查找，特殊处理; 此时优先执行循环
         if (!matchMode && numAst.greedy) {
-            numAst.circleNum++;
+            numAstCircleNum[numAst.numAstNo]++;
             if (searchTree(numAst.ast, i, end, str)) {
                 return true;
             }
@@ -382,7 +390,7 @@ public class ASTMatcher {
             if (searchTree(getNextAndGroupEndCheck(numAst, i), i, end, str)) {
                 return true;
             }
-            numAst.circleNum++;
+            numAstCircleNum[numAst.numAstNo]++;
             return searchTree(numAst.ast, i, end, str);
         }
     }
@@ -403,9 +411,10 @@ public class ASTMatcher {
      * +
      */
     private boolean searchAtLeastOne(NumAst numAst, int i, int end, String str) {
-        int curCircleNum = numAst.circleNum;
+        int numAstNo = numAst.numAstNo;
+        int curCircleNum = numAstCircleNum[numAstNo];
         if (curCircleNum < 1) {
-            numAst.circleNum++;
+            numAstCircleNum[numAstNo]++;
             return searchTree(numAst.ast, i, end, str);
         }
         if (shouldReturn(numAst, i)) {
@@ -413,18 +422,18 @@ public class ASTMatcher {
         }
         //find模式 且是贪心查找，特殊处理
         if (!matchMode && numAst.greedy) {
-            numAst.circleNum = curCircleNum + 1;
+            numAstCircleNum[numAstNo]= curCircleNum + 1;
             if (searchTree(numAst.ast, i, end, str)) {
                 return true;
             }
-            numAst.circleNum = 0;
+            numAstCircleNum[numAstNo]  = 0;
             return searchTree(getNextAndGroupEndCheck(numAst, i), i, end, str);
         } else {
-            numAst.circleNum = 0;
+            numAstCircleNum[numAstNo] = 0;
             if (searchTree(getNextAndGroupEndCheck(numAst, i), i, end, str)) {
                 return true;
             }
-            numAst.circleNum = curCircleNum + 1;
+            numAstCircleNum[numAstNo]= curCircleNum + 1;
             return searchTree(numAst.ast, i, end, str);
         }
     }
@@ -433,9 +442,10 @@ public class ASTMatcher {
      * {a,b}
      */
     private boolean searchRangeAst(NumAst rangeAst, int i, int end, String str) {
-        int curCircle = rangeAst.circleNum;
+        int numAstNo = rangeAst.numAstNo;
+        int curCircle = numAstCircleNum[numAstNo];
         if (curCircle < rangeAst.start) {
-            rangeAst.circleNum++;
+            numAstCircleNum[numAstNo]++;
             return searchTree(rangeAst.ast, i, end, str);
         }
         if (shouldReturn(rangeAst, i)) {
@@ -444,21 +454,21 @@ public class ASTMatcher {
         //find模式 且是贪心查找，特殊处理
         if (!matchMode && rangeAst.greedy) {
             if (curCircle + 1 <= rangeAst.end) {
-                rangeAst.circleNum = curCircle + 1;
+                numAstCircleNum[numAstNo] = curCircle + 1;
                 if (searchTree(rangeAst.ast, i, end, str)) {
                     return true;
                 }
             }
-            rangeAst.circleNum = 0;
+            numAstCircleNum[numAstNo]= 0;
             return searchTree(getNextAndGroupEndCheck(rangeAst, i), i, end, str);
             //match模式 或者 find模式的非贪心查找
         } else {
-            rangeAst.circleNum = 0;
+            numAstCircleNum[numAstNo] = 0;
             if (searchTree(getNextAndGroupEndCheck(rangeAst, i), i, end, str)) {
                 return true;
             }
             if (curCircle + 1 <= rangeAst.end) {
-                rangeAst.circleNum = curCircle + 1;
+                numAstCircleNum[numAstNo] = curCircle + 1;
                 return searchTree(rangeAst.ast, i, end, str);
             }
         }
@@ -469,12 +479,12 @@ public class ASTMatcher {
      * {num}
      */
     private boolean searchFixedAst(NumAst unfixed, int i, int end, String str) {
-        if (unfixed.circleNum != unfixed.num) {
-            unfixed.circleNum++;
+        if (numAstCircleNum[unfixed.numAstNo] != unfixed.num) {
+            numAstCircleNum[unfixed.numAstNo]++;
             return searchTree(unfixed.ast, i, end, str);
         }
         //还原
-        unfixed.circleNum = 0;
+        numAstCircleNum[unfixed.numAstNo] = 0;
         return searchTree(getNextAndGroupEndCheck(unfixed, i), i, end, str);
     }
 
@@ -486,7 +496,7 @@ public class ASTMatcher {
             return null;
         }
         if (ast instanceof NumAst) {
-            if (((NumAst) ast).circleNum != 0) {
+            if (numAstCircleNum[((NumAst) ast).numAstNo] != 0) {
                 return ast;
             }
         }
@@ -612,4 +622,16 @@ public class ASTMatcher {
         return null;
     }
 
+    /**
+     *
+    清除 NumAst的 circleNum,maxI信息
+     */
+    private void clearNumAstStatus(Ast ast) {
+        if (ast.nodeMaxNumAstNo != Util.NONE) {
+            for (int i = ast.nodeMinNumAstNo; i <= ast.nodeMaxNumAstNo; i++) {
+               numAstCircleNum[i] = 0;
+               numAstMaxI[i] = Util.NONE;
+            }
+        }
+    }
 }

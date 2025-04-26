@@ -121,16 +121,8 @@ class RegexToASTree {
         }
     }
 
-    private void reset(){
-        i = 0;
-        groupCount = 0;
-        groupAsts = new ArrayList<>();
-    }
-
-
 
     Ast astTree() {
-        reset();
         Ast ast = orTree();
         ast.setNext(Util.END_AST);
         tree2Linked(ast);
@@ -172,6 +164,12 @@ class RegexToASTree {
 
     private Ast multiTree() {
         Ast single = single();
+        if (single instanceof TerminalAst) {
+            TerminalAst t = ((TerminalAst) single);
+            if (t.isRecursiveType()) {
+               t.recursiveNo = recursiveCount++;
+            }
+        }
         for (; ; ) {
             if (isEnd()) {
                 return single;

@@ -21,25 +21,4 @@ class CatAst extends Ast implements Cloneable {
         return catAst;
     }
 
-    @Override
-    void clearNumAstStatus() {
-        for(Ast a : asts){
-            a.clearNumAstStatus();
-        }
-    }
-    @Override
-    void storeStatus(Map<Ast, MatcherStatus.AstStatus> map) {
-        super.storeStatus(map);
-        for(Ast a : asts){
-            a.storeStatus(map);
-        }
-    }
-
-    @Override
-    void loadStatus(Map<Ast, MatcherStatus.AstStatus> map) {
-        super.loadStatus(map);
-        for(Ast a : asts){
-            a.loadStatus(map);
-        }
-    }
 }
