@@ -43,6 +43,11 @@ public class ASTMatcher {
      */
     Set<FindResult> recursiveNoGreedyResults = new HashSet<>();
 
+    /**
+     * 当前用作结尾的 节点
+     */
+    Ast curEndAst = Util.END_AST;
+
     private boolean strIsEnd(int i, int end) {
         //当 match模式且expressionLevel > 0时，说明处于表达式匹配，且已经匹配到了结尾
         //只要 i >searchStart，就记录一个结果到result中
@@ -54,7 +59,7 @@ public class ASTMatcher {
     }
 
     private boolean treeIsEnd(Ast ast) {
-        return ast instanceof EndAst;
+        return Objects.equals(ast,curEndAst);
     }
 
 
@@ -465,7 +470,9 @@ public class ASTMatcher {
                 //记录好当前状态，并做好预查的准备
                 MatcherStatus matcherStatus = new MatcherStatus(this, ast);
                 Ast next = ast.getNext();
-                Util.resetNext(ast, Util.END_AST);
+                // 将next设置为当前的end节点
+                Ast endAst = curEndAst;
+                curEndAst =  next;
                 //预查使用匹配模式
                 this.matchMode = true;
                 //查询前，需要将ast的groupType设置成非预查模式，不然会不断的进入这里的代码，
@@ -491,7 +498,7 @@ public class ASTMatcher {
                 }
                 //状态还原
                 ast.groupType = groupType;
-                Util.resetNext(ast, next);
+                curEndAst = endAst;
                 matcherStatus.resumeStatus();
                 //如果 ast.getNext()也是一个预查节点，应该再次处理
                 return groupStartCheck(result, i, str);

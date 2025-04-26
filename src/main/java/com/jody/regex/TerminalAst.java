@@ -210,7 +210,8 @@ class TerminalAst extends Ast implements Cloneable {
         //记录调用前的状态
         MatcherStatus matcherStatus = new MatcherStatus(astMatcher, ast);
         Ast next = ast.getNext();
-        Util.resetNext(ast, Util.END_AST);
+        Ast endAst = astMatcher.curEndAst;
+        astMatcher.curEndAst = next;
         //查询
         int result = -1;
         if (astMatcher.findForwardChangeStart(i, i, end, ast)) {
@@ -220,7 +221,7 @@ class TerminalAst extends Ast implements Cloneable {
         astMatcher.expressionLevel--;
         //还原状态
         matcherStatus.resumeStatus();
-        Util.resetNext(ast, next);
+        astMatcher.curEndAst = endAst;
         return result;
     }
 
