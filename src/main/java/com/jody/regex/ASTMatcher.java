@@ -10,7 +10,7 @@ public class ASTMatcher {
     /**
      * 所有的组
      */
-    private final List<Ast> groupAsts;
+    final List<Ast> groupAsts;
     /**
      * find模式下，查找结果的起点
      */
@@ -48,6 +48,26 @@ public class ASTMatcher {
      */
     Ast curEndAst = Util.END_AST;
 
+
+    /**
+     * 记录组的捕获情况
+     */
+    final int[] groupCatch;
+
+    /**
+     *记录 NumAst 的 circleNum
+     */
+    /**
+     * 记录节点循环的次数
+     */
+    final int[] numAstCircleNum;
+    /**
+     *记录numASt已经处理过的最大状态
+     */
+    final int[] numAstMaxI;
+
+
+
     private boolean strIsEnd(int i, int end) {
         //当 match模式且expressionLevel > 0时，说明处于表达式匹配，且已经匹配到了结尾
         //只要 i >searchStart，就记录一个结果到result中
@@ -66,9 +86,20 @@ public class ASTMatcher {
      ASTMatcher(ASTPattern pattern,String str) {
          RegexToASTree regexToASTree = pattern.regexToASTree;
          this.regex = regexToASTree.astTree();
-        this.groupAsts = regexToASTree.groupAsts;
-        this.hasRecursiveNoGreedy = regexToASTree.hasRecursiveNoGreedy;
-        this.str = str;
+         this.groupAsts = regexToASTree.groupAsts;
+         this.hasRecursiveNoGreedy = regexToASTree.hasRecursiveNoGreedy;
+         this.str = str;
+         groupCatch = new int[groupAsts.size() * 2];
+         for (int i = 0; i < groupAsts.size() * 2; i++) {
+             groupCatch[i] = Util.NONE;
+         }
+
+         numAstMaxI = new int[regexToASTree.numAstCount];
+         numAstCircleNum = new int[regexToASTree.numAstCount];
+         for (int i = 0; i < regexToASTree.numAstCount; i++) {
+             numAstMaxI[i] = Util.NONE;
+             numAstCircleNum[i] = 0;
+         }
     }
 
     /**
@@ -264,7 +295,7 @@ public class ASTMatcher {
             int count;
             //处理反向引用
             if (terminalAst.isGroupType()) {
-                count = terminalAst.matchGroup(str,i, groupAsts);
+                count = terminalAst.matchGroup(str,i, this);
                 //处理表达式引用和递归引用
             } else if (terminalAst.isExpressionType()) {
                 //递归引用
@@ -289,7 +320,7 @@ public class ASTMatcher {
         }
         if (tree instanceof CatAst) {
             CatAst cat = (CatAst) tree;
-            return searchTree(cat.ast.get(0), i, end, str);
+            return searchTree(cat.asts.get(0), i, end, str);
         }
         if (tree instanceof OrAst) {
             return searchOrAst((OrAst) tree, i, end, str);
@@ -461,7 +492,7 @@ public class ASTMatcher {
         }
         if (ast.groupNum != 0) {
             if (ast.groupType == Group.CATCH_GROUP) {
-                ast.groupStart = i;
+                groupCatch[ast.groupNum * 2] = i;
             } else if (ast.groupType == Group.NOT_CATCH_GROUP) {
                 //do nothing
             } else {
@@ -515,7 +546,7 @@ public class ASTMatcher {
             Ast leaveGroup = groupAsts.get(ast.leaveGroupNum);
             //捕获成功
             if (leaveGroup.groupType == Group.CATCH_GROUP) {
-                leaveGroup.groupEnd = i;
+                groupCatch[leaveGroup.groupNum * 2 + 1] = i;
             }
         }
         return ast.getNext();
@@ -553,11 +584,12 @@ public class ASTMatcher {
         if(groupNum == groupAsts.size()){
             return null;
         }
-        Ast ast = groupAsts.get(groupNum);
-        if(ast.groupStart == -1 || ast.groupEnd == -1){
+        int left = groupCatch[groupNum * 2];
+        int right = groupCatch[groupNum * 2 + 1];
+        if(left == Util.NONE || right == Util.NONE){
             return null;
         }
-        return str.substring(ast.groupStart, ast.groupEnd);
+        return str.substring(left,right);
     }
 
     /**
@@ -569,10 +601,12 @@ public class ASTMatcher {
         }
         for (Ast ast : groupAsts) {
            if(groupName.equals(ast.groupName)){
-               if(ast.groupStart == -1 || ast.groupEnd == -1){
+               int left = groupCatch[ast.groupNum*2];
+               int right = groupCatch[ast.groupNum * 2 + 1];
+               if(left == Util.NONE || right == Util.NONE){
                    return null;
                }
-               return str.substring(ast.groupStart, ast.groupEnd);
+               return str.substring(left,right);
            }
         }
         return null;

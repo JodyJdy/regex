@@ -5,7 +5,14 @@ import java.util.List;
 
 class Util {
 
+    /**
+     * 表示结尾节点，只需要实例化一个
+     */
     static final EndAst END_AST = new EndAst();
+    /**
+     * 表示无意义的值
+     */
+    static final int NONE = -1;
 
     private static void doResetNext(Ast ast){
         if (ast instanceof OrAst) {
@@ -16,8 +23,8 @@ class Util {
             }
         } else if (ast instanceof CatAst) {
             CatAst catAst = (CatAst) ast;
-            int len = catAst.ast.size();
-            Ast last = catAst.ast.get(len - 1);
+            int len = catAst.asts.size();
+            Ast last = catAst.asts.get(len - 1);
             last.setNext(ast.getNext());
             //cat子节点中只有最后一个的next发生了更改，其他子节点不用处理
             doResetNext(last);
@@ -82,5 +89,44 @@ class Util {
             }
         }
         return result;
+    }
+
+    /**
+     *设置 ast节点的
+     * numAstNoMin
+     * numAstNoMax 值
+     */
+     static void setNodeMinMaxNumAstNo(Ast ast) {
+        if (ast instanceof NumAst) {
+            setNodeMinMaxNumAstNo(((NumAst) ast).ast);
+            setNode(ast,((NumAst) ast).ast);
+            return;
+        }
+        if (ast instanceof EndAst || ast instanceof TerminalAst) {
+            return;
+        }
+        if (ast instanceof CatAst) {
+            for (Ast a : ((CatAst) ast).asts) {
+                setNodeMinMaxNumAstNo(a);
+                setNode(ast,a);
+            }
+        }
+        if (ast instanceof OrAst) {
+            for (Ast a : ((OrAst) ast).asts) {
+                setNodeMinMaxNumAstNo(a);
+                setNode(ast,a);
+            }
+        }
+    }
+
+    private static void setNode(Ast notSet, Ast set) {
+        if (notSet instanceof NumAst) {
+            int numAstNo = ((NumAst) notSet).numAstNo;
+            notSet.nodeMinNumAstNo = Math.min(notSet.nodeMinNumAstNo,Math.min(numAstNo, set.nodeMinNumAstNo));
+            notSet.nodeMaxNumAstNo =   Math.max(notSet.nodeMaxNumAstNo,Math.max(numAstNo, set.nodeMaxNumAstNo));
+        } else{
+            notSet.nodeMinNumAstNo = Math.min(notSet.nodeMinNumAstNo,set.nodeMinNumAstNo);
+            notSet.nodeMaxNumAstNo = Math.max(notSet.nodeMaxNumAstNo,set.nodeMaxNumAstNo);
+        }
     }
 }

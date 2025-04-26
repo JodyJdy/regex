@@ -18,6 +18,16 @@ class RegexToASTree {
     private int groupCount = 0;
 
     /**
+     * 可计数节点的编号
+     */
+    int numAstCount = 0;
+
+    /**
+     * 递归节点的编号
+     */
+    int recursiveCount = 0;
+
+    /**
      * 收集所有的组
      */
     List<Ast> groupAsts = new ArrayList<>();
@@ -84,7 +94,7 @@ class RegexToASTree {
             }
         } else if (ast instanceof CatAst) {
             CatAst catAst = (CatAst) ast;
-            List<Ast> asts = catAst.ast;
+            List<Ast> asts = catAst.asts;
             int len = asts.size();
             Ast last = asts.get(len - 1);
             last.setNext(ast.getNext());
@@ -117,6 +127,8 @@ class RegexToASTree {
         groupAsts = new ArrayList<>();
     }
 
+
+
     Ast astTree() {
         reset();
         Ast ast = orTree();
@@ -124,6 +136,8 @@ class RegexToASTree {
         tree2Linked(ast);
         //将自身当作编号为0的组
         groupAsts.add(0, ast);
+        //设置节点中可计数节点的编号范围
+        Util.setNodeMinMaxNumAstNo(ast);
         return ast;
     }
 
@@ -166,7 +180,7 @@ class RegexToASTree {
             switch (ch) {
                 case '+':
                     next();
-                    single = new NumAst(single, NumAst.AT_LEAST_1);
+                    single = new NumAst(single, NumAst.AT_LEAST_1,numAstCount++);
                     while (!isEnd() && getCh() == '+') {
                         next();
                     }
@@ -176,12 +190,12 @@ class RegexToASTree {
                     while (!isEnd() && (getCh() == '*' || getCh() == '+')) {
                         next();
                     }
-                    single = new NumAst(single, NumAst.AT_LEAST_0);
+                    single = new NumAst(single, NumAst.AT_LEAST_0,numAstCount++);
                     break;
                 case '?':
                     next();
                     Ast temp = single;
-                    single = new NumAst(single, NumAst.MOST_1);
+                    single = new NumAst(single, NumAst.MOST_1,numAstCount++);
                     //特殊情况，对于递归调用 \\g<0>? 代表非贪婪模式， \\g<0> 代表贪婪模式
                     if (temp instanceof TerminalAst && ((TerminalAst) temp).isRecursiveType()) {
                         ((NumAst) single).greedy = false;
@@ -202,9 +216,9 @@ class RegexToASTree {
                     }
                     checkAndNext('}');
                     if (end == 0) {
-                        single = new NumAst(single, start);
+                        single = new NumAst(single, start,numAstCount++);
                     } else {
-                        single = new NumAst(single, start, end);
+                        single = new NumAst(single, start, end,numAstCount++);
                     }
                     break;
                 default:

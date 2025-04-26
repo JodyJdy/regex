@@ -27,7 +27,7 @@ class TerminalAst extends Ast implements Cloneable {
     /**
      * 递归表达式匹配时的最大下标
      */
-    int recursiveI = -1;
+    int recursiveI = Util.NONE;
 
     TerminalAst(int type) {
         this.type = type;
@@ -76,7 +76,7 @@ class TerminalAst extends Ast implements Cloneable {
         if (i == 0) {
             // "" 不是单词边界
             if (str.isEmpty()) {
-               return -1;
+               return Util.NONE;
             }
             // "a"   匹配  \\ba
             if(Terminal.isw(str.charAt(i))){
@@ -87,7 +87,7 @@ class TerminalAst extends Ast implements Cloneable {
             if (Terminal.isw(str.charAt(i - 1))) {
                 return 0;
             }
-            return -1;
+            return Util.NONE;
         }
         //字符串中的边界
         if (i > 0) {
@@ -96,7 +96,7 @@ class TerminalAst extends Ast implements Cloneable {
                 return 0;
             }
         }
-        return -1;
+        return Util.NONE;
     }
 
     /**
@@ -111,7 +111,7 @@ class TerminalAst extends Ast implements Cloneable {
             }
             //和单词边界相反， 由于存在复合类型 [\b\B], 这里的 Terminal.isB() 判断是必须的
             if (Terminal.isB(type)) {
-                return result == 0 ? -1 : 0;
+                return result == 0 ? Util.NONE : 0;
             }
         }
         // 目前仅以str字符串开始和结尾来判断 ^ $
@@ -120,7 +120,7 @@ class TerminalAst extends Ast implements Cloneable {
             if (i == 0) {
                 return 0;
             }
-            return -1;
+            return Util.NONE;
         }
         //结束符号
         if (Terminal.isEnd(type)) {
@@ -132,22 +132,22 @@ class TerminalAst extends Ast implements Cloneable {
 
         //下面的都是占字符的终结符类型，一定要能取到字符，此时需要i进行判断
         if (i >= end || i >= str.length()) {
-            return -1;
+            return Util.NONE;
         }
         char chi = str.charAt(i);
         // 普通的字符比较
         if (Terminal.isSimple(type)) {
             //单个字符比较
             if (this.c != null) {
-                return chi == this.c ? 1 : -1;
+                return chi == this.c ? 1 : Util.NONE;
             }
             if (i + cs.length() > end || i + cs.length() > str.length()) {
-                return -1;
+                return Util.NONE;
             }
             //多个字符比较
             for (int x = 0; x < cs.length(); x++) {
                 if (str.charAt(i + x) != cs.charAt(x)) {
-                    return -1;
+                    return Util.NONE;
                 }
             }
             return cs.length();
@@ -170,32 +170,34 @@ class TerminalAst extends Ast implements Cloneable {
         if (isNegative != result) {
             return 1;
         }
-        return -1;
+        return Util.NONE;
     }
 
     /**
      * 处理 分组引用
      */
-    int matchGroup(String str, int i, List<Ast> groups) {
+    int matchGroup(String str, int i, ASTMatcher astMatcher) {
+        List<Ast> groups = astMatcher.groupAsts;
         int referenceGroupNum = getReferenceGroupNum();
         if (referenceGroupNum > groups.size()) {
             throw new RuntimeException("groupNum dose not exist");
         }
-        Ast group = groups.get(referenceGroupNum);
+        int left = astMatcher.groupCatch[referenceGroupNum*2];
+        int right = astMatcher.groupCatch[referenceGroupNum*2 + 1];
         //未成功捕获
-        if(group.groupStart == -1 || group.groupEnd == -1){
-           return  -1;
+        if(left == Util.NONE || right == Util.NONE){
+           return  Util.NONE;
         }
-        String catchStr = str.substring(group.groupStart, group.groupEnd);
+        String catchStr = str.substring(left, right);
         if (i + catchStr.length() <= str.length()) {
             for (int x = 0; x < catchStr.length(); x++) {
                 if (str.charAt(i + x) != catchStr.charAt(x)) {
-                    return -1;
+                    return Util.NONE;
                 }
             }
             return catchStr.length();
         }
-        return -1;
+        return Util.NONE;
 
     }
 
@@ -213,7 +215,7 @@ class TerminalAst extends Ast implements Cloneable {
         Ast endAst = astMatcher.curEndAst;
         astMatcher.curEndAst = next;
         //查询
-        int result = -1;
+        int result = Util.NONE;
         if (astMatcher.findForwardChangeStart(i, i, end, ast)) {
             result = astMatcher.result - i;
             storeRecursive(astMatcher);

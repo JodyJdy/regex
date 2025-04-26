@@ -25,11 +25,6 @@ abstract class Ast implements Cloneable{
      */
     int groupType;
     /**
-     * 捕获到的分组
-     */
-    int groupStart = -1;
-    int groupEnd = -1;
-    /**
      * 跳转到下个节点时，是否离开了一个group的范围
      */
     boolean nextLeaveGroup;
@@ -37,6 +32,13 @@ abstract class Ast implements Cloneable{
      * 离开组的编号
      */
     int leaveGroupNum;
+
+    /**
+     * 当前节点以及所有子节点 最小/最大的编号
+     */
+    int nodeMinNumAstNo = Integer.MAX_VALUE;
+    int nodeMaxNumAstNo = Util.NONE;
+
 
     @Override
     protected Object clone() throws CloneNotSupportedException {

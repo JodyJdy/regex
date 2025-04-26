@@ -8,9 +8,10 @@ public class NumAst extends Ast implements Cloneable{
     final static String MOST_1 = "?";
     final static String UN_FIX = "num";
     final static String RANGE = "range";
+
     Ast ast;
     /**
-     * 语法分析用，记录节点循环的次数
+     * 记录节点循环的次数
      */
     int circleNum;
     /**
@@ -28,23 +29,30 @@ public class NumAst extends Ast implements Cloneable{
      */
     int num;
     /**
+     * 可计数的ast的编号
+     */
+    int numAstNo;
+    /**
      {start,end}
      */
     int start,end;
-    NumAst(Ast ast, String type) {
+    NumAst(Ast ast, String type,int numAstNo) {
         this.ast = ast;
         this.type = type;
+        this.numAstNo = numAstNo;
     }
-    NumAst(Ast ast, int num){
+    NumAst(Ast ast, int num,int numAstNo){
         this.ast = ast;
         this.num = num;
         type = UN_FIX;
+        this.numAstNo = numAstNo;
     }
-    NumAst(Ast ast, int start, int end){
+    NumAst(Ast ast, int start, int end,int numAstNo){
         this.ast =ast;
         this.start = start;
         this.end = end;
         type = RANGE;
+        this.numAstNo = numAstNo;
     }
 
     @Override
