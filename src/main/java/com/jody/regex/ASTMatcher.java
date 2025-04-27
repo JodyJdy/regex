@@ -349,17 +349,19 @@ public class ASTMatcher {
         }
         //find模式 且是贪心查找，特殊处理; 此时优先执行循环
         if (!matchMode && numAst.greedy) {
-            numAstCircleNum[numAst.numAstNo]++;
-            if (searchTree(numAst.ast, i, end)) {
+            boolean search = searchTree(numAst.ast, i, end);
+            numAstMaxI[numAst.numAstNo] = -1;
+            if (search) {
                 return true;
             }
             return searchTree(getNextAndGroupEndCheck(numAst, i), i, end);
             //match模式或者 find模式的非贪心查找，此时优先处理next节点
         } else {
-            if (searchTree(getNextAndGroupEndCheck(numAst, i), i, end)) {
+            boolean search = searchTree(getNextAndGroupEndCheck(numAst, i), i, end);
+            if (search) {
                 return true;
             }
-            numAstCircleNum[numAst.numAstNo]++;
+            numAstMaxI[numAst.numAstNo] = -1;
             return searchTree(numAst.ast, i, end);
         }
     }
@@ -608,7 +610,6 @@ public class ASTMatcher {
      * 处理递归的情况
      */
     private boolean searchRecursive(TerminalAst recursive, int i, int end) {
-        int start = this.findResultStart;
         //贪婪模式，优先读取
         if (recursive.recursiveGreedy) {
             expressionLevel++;
