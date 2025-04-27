@@ -281,7 +281,7 @@ public class ASTMatcher {
                 count = terminalAst.matchGroup(str,i, this);
                 //处理表达式引用
             } else if (terminalAst.isExpressionType() && !terminalAst.isRecursiveType()) {
-                count = terminalAst.matchExpression(i, groupAsts, end, this);
+                return searchExpression(terminalAst, i, end);
             } else if (terminalAst.isRecursiveType()) {
                 return searchRecursive(terminalAst, i, end);
             } else {
@@ -331,6 +331,7 @@ public class ASTMatcher {
 
     /**
      * 遇到之前的状态，不应该再处理
+     * 主要是防止空转， 对于  * + 有用
      */
     private boolean shouldReturn(NumAst numAst, int i) {
         if (numAstMaxI[numAst.numAstNo] >= i) {
@@ -350,7 +351,7 @@ public class ASTMatcher {
         //find模式 且是贪心查找，特殊处理; 此时优先执行循环
         if (!matchMode && numAst.greedy) {
             boolean search = searchTree(numAst.ast, i, end);
-            numAstMaxI[numAst.numAstNo] = -1;
+            numAstMaxI[numAst.numAstNo] = Util.NONE;
             if (search) {
                 return true;
             }
@@ -358,10 +359,10 @@ public class ASTMatcher {
             //match模式或者 find模式的非贪心查找，此时优先处理next节点
         } else {
             boolean search = searchTree(getNextAndGroupEndCheck(numAst, i), i, end);
+            numAstMaxI[numAst.numAstNo] = Util.NONE;
             if (search) {
                 return true;
             }
-            numAstMaxI[numAst.numAstNo] = -1;
             return searchTree(numAst.ast, i, end);
         }
     }
@@ -393,18 +394,22 @@ public class ASTMatcher {
         }
         //find模式 且是贪心查找，特殊处理
         if (!matchMode && numAst.greedy) {
-            numAstCircleNum[numAstNo]= curCircleNum + 1;
-            if (searchTree(numAst.ast, i, end)) {
+            boolean search = searchTree(numAst.ast, i, end);
+            //状态还原
+            numAstMaxI[numAst.numAstNo] = Util.NONE;
+            numAstCircleNum[numAstNo] = 0;
+            if (search) {
                 return true;
             }
-            numAstCircleNum[numAstNo]  = 0;
             return searchTree(getNextAndGroupEndCheck(numAst, i), i, end);
         } else {
+            boolean search = searchTree(getNextAndGroupEndCheck(numAst, i), i, end);
+            //状态还原
+            numAstMaxI[numAst.numAstNo] = Util.NONE;
             numAstCircleNum[numAstNo] = 0;
-            if (searchTree(getNextAndGroupEndCheck(numAst, i), i, end)) {
+            if (search) {
                 return true;
             }
-            numAstCircleNum[numAstNo]= curCircleNum + 1;
             return searchTree(numAst.ast, i, end);
         }
     }
@@ -604,6 +609,26 @@ public class ASTMatcher {
                numAstMaxI[i] = Util.NONE;
             }
         }
+    }
+
+    /**
+     * 处理表达式情况
+     */
+    private boolean searchExpression(TerminalAst expression, int i, int end) {
+        int referenceGroupNum = Terminal.getReferenceGroupNum(expression.type);
+        if(referenceGroupNum >=groupAsts.size()){
+            throw new RuntimeException("groupNum dose not exist");
+        }
+        expressionLevel++;
+        //获取引用的组
+        Ast ast = groupAsts.get(referenceGroupNum);
+        Ast beforeEnd = curEndAst;
+        curEndAst = ast.getNext();
+        boolean suc = searchTree(ast, i, end);;
+        curEndAst = beforeEnd;
+        suc = suc && searchTree(getNextAndGroupEndCheck(expression.getNext(), this.result), this.result, end);
+        expressionLevel--;
+        return suc;
     }
 
     /**

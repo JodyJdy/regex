@@ -206,52 +206,6 @@ class TerminalAst extends Ast implements Cloneable {
 
     }
 
-    /**
-     * 处理表达式引用
-     * 这里不处理递归情形
-     */
-    int matchExpression(int i, List<Ast> groups, int end, ASTMatcher astMatcher) {
-        Ast ast;
-        //获取引用的表达式的下标
-        astMatcher.expressionLevel++;
-        int referenceGroupNum = getReferenceGroupNum();
-        if(referenceGroupNum >=groups.size()){
-            throw new RuntimeException("groupNum dose not exist");
-        }
-        ast = groups.get(getReferenceGroupNum());
-        //记录调用前的状态
-        MatcherStatus matcherStatus = new MatcherStatus(astMatcher, ast);
-        Ast next = ast.getNext();
-        Ast endAst = astMatcher.curEndAst;
-        astMatcher.curEndAst = next;
-        //查询
-        int result = Util.NONE;
-        if (astMatcher.findForwardChangeStart(i, i, end, ast)) {
-            result = astMatcher.result - i;
-        }
-        astMatcher.expressionLevel--;
-        //还原状态
-        matcherStatus.resumeStatus();
-        astMatcher.curEndAst = endAst;
-        return result;
-    }
-
-    /**
-     * 存储递归非匹配的结果
-     * <p>
-     * 记录递归匹配非贪婪匹配的结果，要求，最短，最靠近左边，
-     */
-    private void storeRecursive(ASTMatcher astMatcher) {
-        if (!this.isRecursiveType()) {
-            return;
-        }
-        if (astMatcher.findResultStart == astMatcher.result) {
-            return;
-        }
-        //添加到结果集合里面
-        astMatcher.recursiveNoGreedyResults.add( new FindResult(astMatcher.findResultStart, astMatcher.result));
-    }
-
     @Override
     protected Object clone() throws CloneNotSupportedException {
         return super.clone();
