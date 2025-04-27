@@ -624,9 +624,9 @@ public class ASTMatcher {
         Ast ast = groupAsts.get(referenceGroupNum);
         Ast beforeEnd = curEndAst;
         curEndAst = ast.getNext();
-        boolean suc = searchTree(ast, i, end);;
+        boolean suc = searchTree(ast, i, end);
         curEndAst = beforeEnd;
-        suc = suc && searchTree(getNextAndGroupEndCheck(expression.getNext(), this.result), this.result, end);
+        suc = suc && searchTree(getNextAndGroupEndCheck(expression, this.result), this.result, end);
         expressionLevel--;
         return suc;
     }
