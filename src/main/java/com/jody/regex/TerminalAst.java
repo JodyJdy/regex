@@ -214,6 +214,7 @@ class TerminalAst extends Ast implements Cloneable {
         Ast next = ast.getNext();
         Ast endAst = astMatcher.curEndAst;
         astMatcher.curEndAst = next;
+        // 表达式匹配 使用查询模式
         astMatcher.matchMode = false;
         //查询
         int result = Util.NONE;

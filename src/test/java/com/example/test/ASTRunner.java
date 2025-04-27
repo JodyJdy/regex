@@ -63,9 +63,9 @@ public class ASTRunner {
         //分组捕获
         ASTPattern matcher5 = ASTPattern.compile("(abc)cd\\1\\1");
         System.out.println(matcher5.matcher("abccdabcabcalsdkjfisod").find());
-        //表达式引用，除了递归引用支持贪婪非贪婪,match函数不能很好的支持
+        //表达式引用
         ASTPattern matcher6 = ASTPattern.compile("(a|b|c)xx\\g<1>");
-        System.out.println(matcher6.matcher("axxb").find());
+        System.out.println(matcher6.matcher("axxb").isMatch());
 
     }
     /**
