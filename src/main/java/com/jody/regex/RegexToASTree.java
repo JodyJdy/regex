@@ -1,5 +1,6 @@
 package com.jody.regex;
 
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -266,7 +267,12 @@ class RegexToASTree {
             if (Terminal.isNumber(ch)) {
                 int groupCount = getNum();
                 terminator = new TerminalAst(Terminal.GROUP_CAPTURE | groupCount);
-            } else {
+            }else if(ch == 'x'){
+                next();
+                ch = (char) getHexNum();
+                terminator = new TerminalAst(ch, Terminal.SIMPLE);
+            }
+            else {
                 int type = getTerminalType(ch);
                 if (type == Terminal.SIMPLE) {
                     terminator = new TerminalAst(ch, Terminal.SIMPLE);
@@ -381,6 +387,14 @@ class RegexToASTree {
             next();
         }
         return num;
+    }
+    private int getHexNum(){
+        StringBuilder sb = new StringBuilder();
+        sb.append(getCh());
+        next();
+        sb.append(getCh());
+        next();
+        return Integer.valueOf(sb.toString(), 16);
     }
 
 
