@@ -1,6 +1,7 @@
 package com.jody.regex;
 
 import java.util.*;
+import java.util.regex.Matcher;
 
 public class ASTMatcher {
 
@@ -26,10 +27,6 @@ public class ASTMatcher {
      */
     boolean matchMode;
 
-    /**
-     * 是否有递归非贪婪匹配，\\g<0>?，需要额外处理结果
-     */
-    boolean hasRecursiveNoGreedy;
 
     /**
      * 记录表达式引用的层级，match模式下使用到
@@ -66,18 +63,12 @@ public class ASTMatcher {
      */
     final int[] numAstMaxI;
 
-    /**
-     *记录递归节点的最大状态
-     */
-
-    int[] recursiveI = null;
-
 
 
     private boolean strIsEnd(int i, int end) {
         //当 match模式且expressionLevel > 0时，说明处于表达式匹配，且已经匹配到了结尾
         //只要 i >searchStart，就记录一个结果到result中
-        boolean find = (matchMode && (i == end || expressionLevel > 0 && i > findResultStart)) || (!matchMode && i >= findResultStart);
+        boolean find = (matchMode && (i == end || expressionLevel > 0 && i >= findResultStart)) || (!matchMode && i >= findResultStart);
         if (find) {
             result = i;
         }
@@ -93,7 +84,6 @@ public class ASTMatcher {
          RegexToASTree regexToASTree = pattern.regexToASTree;
          this.regex = pattern.ast;
          this.groupAsts = pattern.groups;
-         this.hasRecursiveNoGreedy = regexToASTree.hasRecursiveNoGreedy;
          this.str = str;
          groupCatch = new int[groupAsts.size() * 2];
          Arrays.fill(groupCatch,Util.NONE);
@@ -101,10 +91,6 @@ public class ASTMatcher {
          numAstCircleNum = new int[regexToASTree.numAstCount];
          Arrays.fill(numAstCircleNum,0);
          Arrays.fill(numAstMaxI,Util.NONE);
-         if (regexToASTree.recursiveCount != 0) {
-             recursiveI = new int[regexToASTree.recursiveCount];
-             Arrays.fill(recursiveI, Util.NONE);
-         }
     }
 
     /**
@@ -117,7 +103,7 @@ public class ASTMatcher {
         int search = searchRight;
         while (searchLeft <= search) {
             clearNumAstStatus(ast);
-            if (searchTree(ast, search, end, str)) {
+            if (searchTree(ast, search, end)) {
                 // record
                 findResultStart = search;
                 return true;
@@ -139,7 +125,7 @@ public class ASTMatcher {
         int search = searchLeft;
         while (search <= searchRight) {
             clearNumAstStatus(ast);
-            if (searchTree(ast, search, end, str)) {
+            if (searchTree(ast, search, end)) {
                 findResultStart = search;
                 return true;
             }
@@ -161,7 +147,7 @@ public class ASTMatcher {
         int search = searchRight;
         while (search <= end) {
             clearNumAstStatus(ast);
-            if (searchTree(ast, searchLeft, search, str)) {
+            if (searchTree(ast, searchLeft, search)) {
                 findResultStart = searchLeft;
                 return true;
             }
@@ -261,28 +247,20 @@ public class ASTMatcher {
     public boolean isMatch() {
         boolean tempMatchMode = this.matchMode;
         this.matchMode = true;
-        boolean recursiveNoGreedy = hasRecursiveNoGreedy;
-        //match模式下 \\g<0>? 的非贪婪匹配不生效
-        if(recursiveNoGreedy){
-            hasRecursiveNoGreedy = false;
-        }
         boolean result =doMatch(0, str.length(), regex);
-        if(recursiveNoGreedy){
-            hasRecursiveNoGreedy = true;
-        }
         this.matchMode = tempMatchMode;
         return result;
     }
 
     private boolean doMatch(int searchStart, int end, Ast ast) {
         clearNumAstStatus(ast);
-        return searchTree(ast, searchStart, end, str);
+        return searchTree(ast, searchStart, end);
     }
 
     /**
      * end 为一个 不能取到字符的下标
      */
-    private boolean searchTree(Ast tree, int i, int end, String str) {
+    private boolean searchTree(Ast tree, int i, int end) {
         if (tree == null) {
             return false;
         }
@@ -301,17 +279,11 @@ public class ASTMatcher {
             //处理反向引用
             if (terminalAst.isGroupType()) {
                 count = terminalAst.matchGroup(str,i, this);
-                //处理表达式引用和递归引用
-            } else if (terminalAst.isExpressionType()) {
-                //递归引用
-                if (terminalAst.isRecursiveType()) {
-                    if (recursiveI[terminalAst.recursiveNo] >= i) {
-                        return searchTree(getNextAndGroupEndCheck(terminalAst, i), i, end, str);
-                    } else {
-                        recursiveI[terminalAst.recursiveNo] = i;
-                    }
-                }
+                //处理表达式引用
+            } else if (terminalAst.isExpressionType() && !terminalAst.isRecursiveType()) {
                 count = terminalAst.matchExpression(i, groupAsts, end, this);
+            } else if (terminalAst.isRecursiveType()) {
+                return searchRecursive(terminalAst, i, end);
             } else {
                 //普通字符的匹配
                 count = terminalAst.match(str, i, end);
@@ -321,36 +293,36 @@ public class ASTMatcher {
                 return false;
             }
             // 匹配成功，继续搜索
-            return searchTree(getNextAndGroupEndCheck(terminalAst, i + count), i + count, end, str);
+            return searchTree(getNextAndGroupEndCheck(terminalAst, i + count), i + count, end);
         }
         if (tree instanceof CatAst) {
             CatAst cat = (CatAst) tree;
-            return searchTree(cat.asts.get(0), i, end, str);
+            return searchTree(cat.asts.get(0), i, end);
         }
         if (tree instanceof OrAst) {
-            return searchOrAst((OrAst) tree, i, end, str);
+            return searchOrAst((OrAst) tree, i, end);
         }
         if (tree instanceof NumAst) {
             NumAst numAst = (NumAst) tree;
             switch (numAst.type) {
                 case NumAst.AT_LEAST_0:
-                    return searchAtLeastZero(numAst, i, end, str);
+                    return searchAtLeastZero(numAst, i, end);
                 case NumAst.AT_LEAST_1:
-                    return searchAtLeastOne(numAst, i, end, str);
+                    return searchAtLeastOne(numAst, i, end);
                 case NumAst.MOST_1:
-                    return searchMostOne(numAst, i, end, str);
+                    return searchMostOne(numAst, i, end);
                 case NumAst.UN_FIX:
-                    return searchFixedAst(numAst, i, end, str);
+                    return searchFixedAst(numAst, i, end);
                 case NumAst.RANGE:
-                    return searchRangeAst(numAst, i, end, str);
+                    return searchRangeAst(numAst, i, end);
             }
         }
         return false;
     }
 
-    private boolean searchOrAst(OrAst orAst, int i, int end, String str) {
+    private boolean searchOrAst(OrAst orAst, int i, int end) {
         for (Ast ast : orAst.asts) {
-            if (searchTree(ast, i, end, str)) {
+            if (searchTree(ast, i, end)) {
                 return true;
             }
         }
@@ -371,48 +343,48 @@ public class ASTMatcher {
     /**
      * *
      */
-    private boolean searchAtLeastZero(NumAst numAst, int i, int end, String str) {
+    private boolean searchAtLeastZero(NumAst numAst, int i, int end) {
         if (shouldReturn(numAst, i)) {
             return false;
         }
         //find模式 且是贪心查找，特殊处理; 此时优先执行循环
         if (!matchMode && numAst.greedy) {
             numAstCircleNum[numAst.numAstNo]++;
-            if (searchTree(numAst.ast, i, end, str)) {
+            if (searchTree(numAst.ast, i, end)) {
                 return true;
             }
-            return searchTree(getNextAndGroupEndCheck(numAst, i), i, end, str);
+            return searchTree(getNextAndGroupEndCheck(numAst, i), i, end);
             //match模式或者 find模式的非贪心查找，此时优先处理next节点
         } else {
-            if (searchTree(getNextAndGroupEndCheck(numAst, i), i, end, str)) {
+            if (searchTree(getNextAndGroupEndCheck(numAst, i), i, end)) {
                 return true;
             }
             numAstCircleNum[numAst.numAstNo]++;
-            return searchTree(numAst.ast, i, end, str);
+            return searchTree(numAst.ast, i, end);
         }
     }
 
     /**
      * ?
      */
-    private boolean searchMostOne(NumAst numAst, int i, int end, String str) {
+    private boolean searchMostOne(NumAst numAst, int i, int end) {
         //贪婪模式，优先读取
         if (numAst.greedy) {
-            return searchTree(numAst.ast, i, end, str) || searchTree(getNextAndGroupEndCheck(numAst, i), i, end, str);
+            return searchTree(numAst.ast, i, end) || searchTree(getNextAndGroupEndCheck(numAst, i), i, end);
         }
         //非贪婪模式，优先处理下一个节点
-        return searchTree(getNextAndGroupEndCheck(numAst, i), i, end, str) || searchTree(numAst.ast, i, end, str);
+        return searchTree(getNextAndGroupEndCheck(numAst, i), i, end) || searchTree(numAst.ast, i, end);
     }
 
     /**
      * +
      */
-    private boolean searchAtLeastOne(NumAst numAst, int i, int end, String str) {
+    private boolean searchAtLeastOne(NumAst numAst, int i, int end) {
         int numAstNo = numAst.numAstNo;
         int curCircleNum = numAstCircleNum[numAstNo];
         if (curCircleNum < 1) {
             numAstCircleNum[numAstNo]++;
-            return searchTree(numAst.ast, i, end, str);
+            return searchTree(numAst.ast, i, end);
         }
         if (shouldReturn(numAst, i)) {
             return false;
@@ -420,30 +392,30 @@ public class ASTMatcher {
         //find模式 且是贪心查找，特殊处理
         if (!matchMode && numAst.greedy) {
             numAstCircleNum[numAstNo]= curCircleNum + 1;
-            if (searchTree(numAst.ast, i, end, str)) {
+            if (searchTree(numAst.ast, i, end)) {
                 return true;
             }
             numAstCircleNum[numAstNo]  = 0;
-            return searchTree(getNextAndGroupEndCheck(numAst, i), i, end, str);
+            return searchTree(getNextAndGroupEndCheck(numAst, i), i, end);
         } else {
             numAstCircleNum[numAstNo] = 0;
-            if (searchTree(getNextAndGroupEndCheck(numAst, i), i, end, str)) {
+            if (searchTree(getNextAndGroupEndCheck(numAst, i), i, end)) {
                 return true;
             }
             numAstCircleNum[numAstNo]= curCircleNum + 1;
-            return searchTree(numAst.ast, i, end, str);
+            return searchTree(numAst.ast, i, end);
         }
     }
 
     /**
      * {a,b}
      */
-    private boolean searchRangeAst(NumAst rangeAst, int i, int end, String str) {
+    private boolean searchRangeAst(NumAst rangeAst, int i, int end) {
         int numAstNo = rangeAst.numAstNo;
         int curCircle = numAstCircleNum[numAstNo];
         if (curCircle < rangeAst.start) {
             numAstCircleNum[numAstNo]++;
-            return searchTree(rangeAst.ast, i, end, str);
+            return searchTree(rangeAst.ast, i, end);
         }
         if (shouldReturn(rangeAst, i)) {
             return false;
@@ -452,21 +424,21 @@ public class ASTMatcher {
         if (!matchMode && rangeAst.greedy) {
             if (curCircle + 1 <= rangeAst.end) {
                 numAstCircleNum[numAstNo] = curCircle + 1;
-                if (searchTree(rangeAst.ast, i, end, str)) {
+                if (searchTree(rangeAst.ast, i, end)) {
                     return true;
                 }
             }
             numAstCircleNum[numAstNo]= 0;
-            return searchTree(getNextAndGroupEndCheck(rangeAst, i), i, end, str);
+            return searchTree(getNextAndGroupEndCheck(rangeAst, i), i, end);
             //match模式 或者 find模式的非贪心查找
         } else {
             numAstCircleNum[numAstNo] = 0;
-            if (searchTree(getNextAndGroupEndCheck(rangeAst, i), i, end, str)) {
+            if (searchTree(getNextAndGroupEndCheck(rangeAst, i), i, end)) {
                 return true;
             }
             if (curCircle + 1 <= rangeAst.end) {
                 numAstCircleNum[numAstNo] = curCircle + 1;
-                return searchTree(rangeAst.ast, i, end, str);
+                return searchTree(rangeAst.ast, i, end);
             }
         }
         return false;
@@ -475,14 +447,14 @@ public class ASTMatcher {
     /**
      * {num}
      */
-    private boolean searchFixedAst(NumAst unfixed, int i, int end, String str) {
+    private boolean searchFixedAst(NumAst unfixed, int i, int end) {
         if (numAstCircleNum[unfixed.numAstNo] != unfixed.num) {
             numAstCircleNum[unfixed.numAstNo]++;
-            return searchTree(unfixed.ast, i, end, str);
+            return searchTree(unfixed.ast, i, end);
         }
         //还原
         numAstCircleNum[unfixed.numAstNo] = 0;
-        return searchTree(getNextAndGroupEndCheck(unfixed, i), i, end, str);
+        return searchTree(getNextAndGroupEndCheck(unfixed, i), i, end);
     }
 
     /**
@@ -630,5 +602,30 @@ public class ASTMatcher {
                numAstMaxI[i] = Util.NONE;
             }
         }
+    }
+
+    /**
+     * 处理递归的情况
+     */
+    private boolean searchRecursive(TerminalAst recursive, int i, int end) {
+        int start = this.findResultStart;
+        //贪婪模式，优先读取
+        if (recursive.recursiveGreedy) {
+            expressionLevel++;
+            boolean recursiveSuc = searchTree(regex, i, end) && searchTree(getNextAndGroupEndCheck(recursive, this.result),this.result,end);
+            expressionLevel--;
+            if(recursiveSuc){
+                return true;
+            }
+            return searchTree(getNextAndGroupEndCheck(recursive, i), i, end);
+        }
+        //非贪婪模式，优先处理下一个节点
+        if (searchTree(getNextAndGroupEndCheck(recursive, i), i, end)) {
+            return true;
+        }
+        expressionLevel++;
+        boolean recursiveSuc = searchTree(regex, i, end)&&searchTree(getNextAndGroupEndCheck(recursive, this.result),this.result,end);
+        expressionLevel--;
+        return recursiveSuc;
     }
 }

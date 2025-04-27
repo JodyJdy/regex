@@ -32,10 +32,6 @@ class RegexToASTree {
      */
     List<Ast> groupAsts = new ArrayList<>();
 
-    /**
-     * 是否有递归非贪婪匹配， \\g<0>?,需要特殊处理结果集
-     */
-    boolean hasRecursiveNoGreedy = false;
 
     RegexToASTree(String regex) {
         this.regex = regex;
@@ -193,11 +189,12 @@ class RegexToASTree {
                 case '?':
                     next();
                     Ast temp = single;
-                    single = new NumAst(single, NumAst.MOST_1,numAstCount++);
-                    //特殊情况，对于递归调用 \\g<0>? 代表非贪婪模式， \\g<0> 代表贪婪模式
-                    if (temp instanceof TerminalAst && ((TerminalAst) temp).isRecursiveType()) {
-                        ((NumAst) single).greedy = false;
-                        hasRecursiveNoGreedy = true;
+                    //特殊情况，对于递归调用 \\g<0>? 代表非贪婪模式， \\g<0> 代表贪婪模式，不再创建一个 NumAst
+                    if(temp instanceof TerminalAst && ((TerminalAst) temp).isRecursiveType()){
+                        //设置非贪婪模式
+                        ((TerminalAst) temp).recursiveGreedy = false;
+                    } else{
+                        single = new NumAst(single, NumAst.MOST_1,numAstCount++);
                     }
                     break;
                 case '{':
@@ -224,7 +221,9 @@ class RegexToASTree {
             }
             //非贪婪模式
             if (!isEnd() && getCh() == '?') {
-                ((NumAst) single).greedy = false;
+                if (single instanceof NumAst) {
+                    ((NumAst) single).greedy = false;
+                }
                 next();
             }
         }
