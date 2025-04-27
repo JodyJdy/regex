@@ -1,7 +1,6 @@
 package com.jody.regex;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Arrays;
 
 /**
  * 记录当ASTMatcher的状态
@@ -36,12 +35,10 @@ class MatcherStatus {
             numAstCircleNum = new int[len];
             numAstMaxI = new int[len];
             int nodeMinNumAstNo = searchAst.nodeMinNumAstNo;
-            for (int i = 0; i < len; i++) {
-                numAstMaxI[i] = astMatcher.numAstMaxI[nodeMinNumAstNo + i];
-                numAstCircleNum[i] = astMatcher.numAstCircleNum[nodeMinNumAstNo + i];
-                astMatcher.numAstMaxI[nodeMinNumAstNo + i] = Util.NONE;
-                astMatcher.numAstCircleNum[nodeMinNumAstNo + i] = 0;
-            }
+            System.arraycopy(astMatcher.numAstMaxI, nodeMinNumAstNo, numAstMaxI, 0, len);
+            System.arraycopy(astMatcher.numAstCircleNum, nodeMinNumAstNo, numAstCircleNum, 0, len);
+            Arrays.fill(astMatcher.numAstMaxI,nodeMinNumAstNo,nodeMinNumAstNo+len,Util.NONE);
+            Arrays.fill(astMatcher.numAstCircleNum, nodeMinNumAstNo, nodeMinNumAstNo + len, 0);
         }
     }
 
@@ -52,10 +49,8 @@ class MatcherStatus {
         // 状态还原
         if (searchAst.nodeMaxNumAstNo != Util.NONE) {
             int nodeMinNumAstNo = searchAst.nodeMinNumAstNo;
-            for (int i = 0; i < numAstMaxI.length; i++) {
-                astMatcher.numAstMaxI[nodeMinNumAstNo + i] = numAstMaxI[i];
-                astMatcher.numAstCircleNum[nodeMinNumAstNo + i] = numAstCircleNum[i];
-            }
+            System.arraycopy(numAstMaxI,0,astMatcher.numAstMaxI,nodeMinNumAstNo,numAstMaxI.length);
+            System.arraycopy(numAstCircleNum,0,astMatcher.numAstCircleNum,nodeMinNumAstNo,numAstMaxI.length);
         }
     }
 

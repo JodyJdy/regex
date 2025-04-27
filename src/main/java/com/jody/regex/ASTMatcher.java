@@ -96,17 +96,14 @@ public class ASTMatcher {
          this.hasRecursiveNoGreedy = regexToASTree.hasRecursiveNoGreedy;
          this.str = str;
          groupCatch = new int[groupAsts.size() * 2];
-         for (int i = 0; i < groupAsts.size() * 2; i++) {
-             groupCatch[i] = Util.NONE;
-         }
+         Arrays.fill(groupCatch,Util.NONE);
          numAstMaxI = new int[regexToASTree.numAstCount];
          numAstCircleNum = new int[regexToASTree.numAstCount];
-         for (int i = 0; i < regexToASTree.numAstCount; i++) {
-             numAstMaxI[i] = Util.NONE;
-             numAstCircleNum[i] = 0;
-         }
+         Arrays.fill(numAstCircleNum,0);
+         Arrays.fill(numAstMaxI,Util.NONE);
          if (regexToASTree.recursiveCount != 0) {
              recursiveI = new int[regexToASTree.recursiveCount];
+             Arrays.fill(recursiveI, Util.NONE);
          }
     }
 
