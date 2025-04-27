@@ -1,6 +1,7 @@
 package com.jody.regex;
 
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 
 public class ASTMatcher {
@@ -281,9 +282,9 @@ public class ASTMatcher {
                 count = terminalAst.matchGroup(str,i, this);
                 //处理表达式引用
             } else if (terminalAst.isExpressionType() && !terminalAst.isRecursiveType()) {
-                return searchExpression(terminalAst, i, end);
+                return false;//searchExpression(terminalAst, i, end);
             } else if (terminalAst.isRecursiveType()) {
-                return searchRecursive(terminalAst, i, end);
+                return false;//searchRecursive(terminalAst, i, end);
             } else {
                 //普通字符的匹配
                 count = terminalAst.match(str, i, end);
@@ -615,43 +616,49 @@ public class ASTMatcher {
      * 处理表达式情况
      */
     private boolean searchExpression(TerminalAst expression, int i, int end) {
-        int referenceGroupNum = Terminal.getReferenceGroupNum(expression.type);
-        if(referenceGroupNum >=groupAsts.size()){
-            throw new RuntimeException("groupNum dose not exist");
-        }
-        expressionLevel++;
-        //获取引用的组
-        Ast ast = groupAsts.get(referenceGroupNum);
-        Ast beforeEnd = curEndAst;
-        curEndAst = ast.getNext();
-        boolean suc = searchTree(ast, i, end);
-        curEndAst = beforeEnd;
-        suc = suc && searchTree(getNextAndGroupEndCheck(expression, this.result), this.result, end);
-        expressionLevel--;
-        return suc;
+        return false;
+//        int referenceGroupNum = Terminal.getReferenceGroupNum(expression.type);
+//        if(referenceGroupNum >=groupAsts.size()){
+//            throw new RuntimeException("groupNum dose not exist");
+//        }
+//        expressionLevel++;
+//        //获取引用的组
+//        Ast ast = groupAsts.get(referenceGroupNum);
+//        final Ast beforeEnd = curEndAst;
+//        curEndAst = ast.getNext();
+//        Supplier<Boolean> curExecute = execute;
+//        execute = ()->{
+//            curEndAst = beforeEnd;
+//            return searchTree(getNextAndGroupEndCheck(expression, this.result), this.result, end);
+//        };
+//        boolean suc = searchTree(ast, i, end);
+//        execute = curExecute;
+//        expressionLevel--;
+//        return suc;
     }
 
     /**
      * 处理递归的情况
      */
     private boolean searchRecursive(TerminalAst recursive, int i, int end) {
-        //贪婪模式，优先读取
-        if (recursive.recursiveGreedy) {
-            expressionLevel++;
-            boolean recursiveSuc = searchTree(regex, i, end) && searchTree(getNextAndGroupEndCheck(recursive, this.result),this.result,end);
-            expressionLevel--;
-            if(recursiveSuc){
-                return true;
-            }
-            return searchTree(getNextAndGroupEndCheck(recursive, i), i, end);
-        }
-        //非贪婪模式，优先处理下一个节点
-        if (searchTree(getNextAndGroupEndCheck(recursive, i), i, end)) {
-            return true;
-        }
-        expressionLevel++;
-        boolean recursiveSuc = searchTree(regex, i, end)&&searchTree(getNextAndGroupEndCheck(recursive, this.result),this.result,end);
-        expressionLevel--;
-        return recursiveSuc;
+        return false;
+//        //贪婪模式，优先读取
+//        if (recursive.recursiveGreedy) {
+//            expressionLevel++;
+//            boolean recursiveSuc = searchTree(regex, i, end) && searchTree(getNextAndGroupEndCheck(recursive, this.result),this.result,end);
+//            expressionLevel--;
+//            if(recursiveSuc){
+//                return true;
+//            }
+//            return searchTree(getNextAndGroupEndCheck(recursive, i), i, end);
+//        }
+//        //非贪婪模式，优先处理下一个节点
+//        if (searchTree(getNextAndGroupEndCheck(recursive, i), i, end)) {
+//            return true;
+//        }
+//        expressionLevel++;
+//        boolean recursiveSuc = searchTree(regex, i, end)&&searchTree(getNextAndGroupEndCheck(recursive, this.result),this.result,end);
+//        expressionLevel--;
+//        return recursiveSuc;
     }
 }

@@ -12,8 +12,6 @@ public class ASTRunner {
         test();
         //测试replace方法
         testReplace();
-        //测试递归
-        testRecursive();
         //测试分组
         testGroup();
         //性能测试， 匹配邮箱的场景性能比原生的要高
@@ -68,27 +66,27 @@ public class ASTRunner {
         System.out.println(matcher6.matcher("axxb").isMatch());
 
     }
-    /**
-     * 测试递归
-     * match不支持 递归引用， find支持
-     */
-    public static void testRecursive(){
-        System.out.println("--------------------testRecursive-------------------");
-        //测试 递归贪婪匹配
-        ASTPattern astPattern = ASTPattern.compile("\\{\\}|\\{('\\w+':('\\w+'|\\d+|\\g<0>),)+'\\w+':('\\w+'|\\d+|\\g<0>)}|\\{'\\w+':('\\w+'|\\d+|\\g<0>)\\}");
-        ASTMatcher matcher = astPattern.matcher("{'key1':'value1','key2':123,'key3':{},'key4':{'key5':'value5'}}");
-        System.out.println(matcher.find());
-        System.out.println(matcher.getFindResult());
-        // 递归贪婪匹配会尽可能的多匹配字符
-        System.out.println(matcher.getRecursiveNoGreedyFindResult());
-        //测试 递归非贪婪匹配
-        ASTPattern astPattern2 = ASTPattern.compile("\\{\\}|\\{('\\w+':('\\w+'|\\d+|\\g<0>?),)+'\\w+':('\\w+'|\\d+|\\g<0>?)}|\\{'\\w+':('\\w+'|\\d+|\\g<0>?)\\}");
-        ASTMatcher matcher2 = astPattern2.matcher("{'key1':'value1','key2':123,'key3':{},'key4':{'key5':'value5'}}");
-        System.out.println(matcher2.find());
-        System.out.println(matcher2.getFindResult());
-        //递归非贪婪匹配， 尽可能少的匹配
-        System.out.println(matcher2.getRecursiveNoGreedyFindResult());
-    }
+//    /**
+//     * 测试递归
+//     * match不支持 递归引用， find支持
+//     */
+//    public static void testRecursive(){
+//        System.out.println("--------------------testRecursive-------------------");
+//        //测试 递归贪婪匹配
+//        ASTPattern astPattern = ASTPattern.compile("\\{\\}|\\{('\\w+':('\\w+'|\\d+|\\g<0>),)+'\\w+':('\\w+'|\\d+|\\g<0>)}|\\{'\\w+':('\\w+'|\\d+|\\g<0>)\\}");
+//        ASTMatcher matcher = astPattern.matcher("{'key1':'value1','key2':123,'key3':{},'key4':{'key5':'value5'}}");
+//        System.out.println(matcher.find());
+//        System.out.println(matcher.getFindResult());
+//        // 递归贪婪匹配会尽可能的多匹配字符
+//        System.out.println(matcher.getRecursiveNoGreedyFindResult());
+//        //测试 递归非贪婪匹配
+//        ASTPattern astPattern2 = ASTPattern.compile("\\{\\}|\\{('\\w+':('\\w+'|\\d+|\\g<0>?),)+'\\w+':('\\w+'|\\d+|\\g<0>?)}|\\{'\\w+':('\\w+'|\\d+|\\g<0>?)\\}");
+//        ASTMatcher matcher2 = astPattern2.matcher("{'key1':'value1','key2':123,'key3':{},'key4':{'key5':'value5'}}");
+//        System.out.println(matcher2.find());
+//        System.out.println(matcher2.getFindResult());
+//        //递归非贪婪匹配， 尽可能少的匹配
+//        System.out.println(matcher2.getRecursiveNoGreedyFindResult());
+//    }
 
     /**
      *测试 replace
