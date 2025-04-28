@@ -407,10 +407,10 @@ public class ASTMatcher {
         //find模式 且是贪心查找，特殊处理
         if (!matchMode && numAst.greedy) {
             boolean search = searchTree(numAst.ast, i, end);
-            //状态还原
-            numAstMaxI[numAst.numAstNo] = Util.NONE;
-            numAstCircleNum[numAstNo] = 0;
             if (search) {
+                //状态还原
+                numAstMaxI[numAst.numAstNo] = Util.NONE;
+                numAstCircleNum[numAstNo] = 0;
                 return true;
             }
             return searchTree(getNextAndGroupEndCheck(numAst, i), i, end);
@@ -444,15 +444,17 @@ public class ASTMatcher {
             if (curCircle + 1 <= rangeAst.end) {
                 numAstCircleNum[numAstNo] = curCircle + 1;
                 if (searchTree(rangeAst.ast, i, end)) {
+                    numAstCircleNum[numAstNo]= 0;
+                    numAstMaxI[numAstNo] = Util.NONE;
                     return true;
                 }
             }
-            numAstCircleNum[numAstNo]= 0;
             return searchTree(getNextAndGroupEndCheck(rangeAst, i), i, end);
             //match模式 或者 find模式的非贪心查找
         } else {
-            numAstCircleNum[numAstNo] = 0;
             if (searchTree(getNextAndGroupEndCheck(rangeAst, i), i, end)) {
+                numAstCircleNum[numAstNo] = 0;
+                numAstMaxI[numAstNo] = Util.NONE;
                 return true;
             }
             if (curCircle + 1 <= rangeAst.end) {
