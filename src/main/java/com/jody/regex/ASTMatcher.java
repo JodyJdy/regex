@@ -416,10 +416,10 @@ public class ASTMatcher {
             return searchTree(getNextAndGroupEndCheck(numAst, i), i, end);
         } else {
             boolean search = searchTree(getNextAndGroupEndCheck(numAst, i), i, end);
-            //状态还原
-            numAstMaxI[numAst.numAstNo] = Util.NONE;
-            numAstCircleNum[numAstNo] = 0;
             if (search) {
+                //状态还原
+                numAstMaxI[numAst.numAstNo] = Util.NONE;
+                numAstCircleNum[numAstNo] = 0;
                 return true;
             }
             return searchTree(numAst.ast, i, end);
