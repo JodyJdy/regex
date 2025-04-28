@@ -16,7 +16,7 @@ class RegexToASTree {
     /**
      * 组的编号
      */
-    private int groupCount = 0;
+    int groupCount = 0;
 
     /**
      * 可计数节点的编号
@@ -124,6 +124,7 @@ class RegexToASTree {
         ast.setNext(Util.END_AST);
         tree2Linked(ast);
         //将自身当作编号为0的组
+        ast.groupNum = 0;
         groupAsts.add(0, ast);
         //设置节点中可计数节点的编号范围
         Util.setNodeMinMaxNumAstNo(ast);
@@ -329,7 +330,7 @@ class RegexToASTree {
         }
         // 遇到分组
         if (ch == '(') {
-            int groupNum = ++groupCount;
+
             int groupType = Group.CATCH_GROUP;
             next();
             String groupName = null;
@@ -355,12 +356,18 @@ class RegexToASTree {
                 }
                 next();
             }
+            int groupNum = -1;
+            if(groupType == Group.CATCH_GROUP){
+                groupNum = ++groupCount;
+            }
             Ast asTree = orTree();
             asTree.groupName = groupName;
             next();
             asTree.groupNum = groupNum;
             asTree.groupType = groupType;
-            groupAsts.add(asTree);
+            if (groupType == Group.CATCH_GROUP) {
+                groupAsts.add(asTree);
+            }
             return asTree;
         }
         next();

@@ -495,7 +495,8 @@ public class ASTMatcher {
                 this.matchMode = true;
                 //查询前，需要将ast的groupType设置成非预查模式，不然会不断的进入这里的代码，
                 int groupType = ast.groupType;
-                ast.groupType = Group.CATCH_GROUP;
+                //不捕获
+                ast.groupType = Group.NOT_CATCH_GROUP;
                 if (groupType == Group.FORWARD_POSTIVE_SEARCH) {
                     if (findForwardChangeEnd(i, i, str.length(), ast)) {
                         result = next;
@@ -529,7 +530,7 @@ public class ASTMatcher {
      * 组捕获结束时的检查
      */
     private Ast getNextAndGroupEndCheck(Ast ast, int i) {
-        if (ast.nextLeaveGroup) {
+        if (ast.nextLeaveGroup && ast.leaveGroupNum >=0) {
             Ast leaveGroup = groupAsts.get(ast.leaveGroupNum);
             //捕获成功
             if (leaveGroup.groupType == Group.CATCH_GROUP) {
