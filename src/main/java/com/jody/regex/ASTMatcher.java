@@ -1,8 +1,6 @@
 package com.jody.regex;
 
 import java.util.*;
-import java.util.function.Supplier;
-import java.util.regex.Matcher;
 
 public class ASTMatcher {
 
@@ -10,9 +8,9 @@ public class ASTMatcher {
     private final Ast regex;
 
     /**
-     * 所有的组
+     * 需要捕获的组
      */
-    final List<Ast> groupAsts;
+    final List<Ast> catchGroups;
     /**
      * find模式下，查找结果的起点
      */
@@ -84,9 +82,9 @@ public class ASTMatcher {
      ASTMatcher(ASTPattern pattern,String str) {
          RegexToASTree regexToASTree = pattern.regexToASTree;
          this.regex = pattern.ast;
-         this.groupAsts = pattern.groups;
+         this.catchGroups = pattern.catchGroups;
          this.str = str;
-         groupCatch = new int[groupAsts.size() * 2];
+         groupCatch = new int[catchGroups.size() * 2];
          Arrays.fill(groupCatch,Util.NONE);
          numAstMaxI = new int[regexToASTree.numAstCount];
          numAstCircleNum = new int[regexToASTree.numAstCount];
@@ -477,7 +475,7 @@ public class ASTMatcher {
                 return ast;
             }
         }
-        if (ast.groupNum != 0) {
+        if (ast.groupType != 0) {
             if (ast.groupType == Group.CATCH_GROUP) {
                 groupCatch[ast.groupNum * 2] = i;
             } else if (ast.groupType == Group.NOT_CATCH_GROUP) {
@@ -530,8 +528,8 @@ public class ASTMatcher {
      * 组捕获结束时的检查
      */
     private Ast getNextAndGroupEndCheck(Ast ast, int i) {
-        if (ast.nextLeaveGroup && ast.leaveGroupNum >=0) {
-            Ast leaveGroup = groupAsts.get(ast.leaveGroupNum);
+        if (ast.nextLeaveGroupNum >=0) {
+            Ast leaveGroup = catchGroups.get(ast.nextLeaveGroupNum);
             //捕获成功
             if (leaveGroup.groupType == Group.CATCH_GROUP) {
                 groupCatch[leaveGroup.groupNum * 2 + 1] = i;
@@ -569,7 +567,7 @@ public class ASTMatcher {
     public String group(int groupNum) {
         // \\1 捕获第一个组， 访问时，则使用 group(0)
         groupNum++;
-        if(groupNum == groupAsts.size()){
+        if(groupNum == catchGroups.size()){
             return null;
         }
         int left = groupCatch[groupNum * 2];
@@ -587,7 +585,7 @@ public class ASTMatcher {
         if (groupName == null || groupName.isEmpty()) {
             return null;
         }
-        for (Ast ast : groupAsts) {
+        for (Ast ast : catchGroups) {
            if(groupName.equals(ast.groupName)){
                int left = groupCatch[ast.groupNum*2];
                int right = groupCatch[ast.groupNum * 2 + 1];

@@ -182,13 +182,17 @@ class TerminalAst extends Ast implements Cloneable {
      * 处理 分组引用
      */
     int matchGroup(String str, int i, ASTMatcher astMatcher) {
-        List<Ast> groups = astMatcher.groupAsts;
+        List<Ast> groups = astMatcher.catchGroups;
         int referenceGroupNum = getReferenceGroupNum();
         if (referenceGroupNum > groups.size()) {
             throw new RuntimeException("groupNum dose not exist");
         }
-        int left = astMatcher.groupCatch[referenceGroupNum*2];
-        int right = astMatcher.groupCatch[referenceGroupNum*2 + 1];
+        //引用的referenceGroupNum和实际的使用不一定是一个
+        // 例如 ((a)) 只有一个Ast节点，在groups里面占据了两个位置，使用下标最小的那个也就是1
+        Ast ast = groups.get(referenceGroupNum);
+        int groupNum = ast.groupNum;
+        int left = astMatcher.groupCatch[groupNum*2];
+        int right = astMatcher.groupCatch[groupNum*2 + 1];
         //未成功捕获
         if(left == Util.NONE || right == Util.NONE){
            return  Util.NONE;

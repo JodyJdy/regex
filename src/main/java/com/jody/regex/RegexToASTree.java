@@ -14,9 +14,9 @@ class RegexToASTree {
     private final String regex;
     int i = 0;
     /**
-     * 组的编号
+     * 捕获组的编号
      */
-    int groupCount = 0;
+    int catchGroupCount = 0;
 
     /**
      * 可计数节点的编号
@@ -75,8 +75,8 @@ class RegexToASTree {
      */
     private static void tree2Linked(Ast ast) {
         if (ast.groupNum != 0) {
-            ast.nextLeaveGroup = true;
-            ast.leaveGroupNum = ast.groupNum;
+            ast.nextLeaveGroupNum = ast.groupNum;
+            ast.nextLeaveGroupType = ast.groupType;
         }
         if (ast instanceof TerminalAst) {
             return;
@@ -85,8 +85,8 @@ class RegexToASTree {
             OrAst orAst = (OrAst) ast;
             for (Ast node : orAst.asts) {
                 node.setNext(orAst.getNext());
-                node.nextLeaveGroup = orAst.nextLeaveGroup;
-                node.leaveGroupNum = orAst.leaveGroupNum;
+                node.nextLeaveGroupNum = orAst.nextLeaveGroupNum;
+                node.nextLeaveGroupType = orAst.nextLeaveGroupType;
                 tree2Linked(node);
             }
         } else if (ast instanceof CatAst) {
@@ -95,8 +95,8 @@ class RegexToASTree {
             int len = asts.size();
             Ast last = asts.get(len - 1);
             last.setNext(ast.getNext());
-            last.nextLeaveGroup = ast.nextLeaveGroup;
-            last.leaveGroupNum = ast.leaveGroupNum;
+            last.nextLeaveGroupNum = ast.nextLeaveGroupNum;
+            last.nextLeaveGroupType = ast.nextLeaveGroupType;
             for(int x = 0; x < len - 1;x++){
                 asts.get(x).setNext(asts.get(x+1));
             }
@@ -109,8 +109,8 @@ class RegexToASTree {
             //对? 进行优化，直接进行链接
             if (numAst.type.equals(NumAst.MOST_1)) {
                 numAst.ast.setNext(numAst.getNext());
-                numAst.ast.nextLeaveGroup = numAst.nextLeaveGroup;
-                numAst.ast.leaveGroupNum = numAst.leaveGroupNum;
+                numAst.ast.nextLeaveGroupNum = numAst.nextLeaveGroupNum;
+                numAst.ast.nextLeaveGroupType = numAst.nextLeaveGroupType;
             } else {
                 numAst.ast.setNext(numAst);
             }
@@ -330,12 +330,15 @@ class RegexToASTree {
         }
         // 遇到分组
         if (ch == '(') {
-
             int groupType = Group.CATCH_GROUP;
             next();
             String groupName = null;
             if (getCh() == '?') {
                 next();
+                // (?n)  开启命名捕获，默认开启
+                if (getCh() == 'n') {
+                   next();
+                }
                 switch (getCh()){
                     case ':':groupType = Group.NOT_CATCH_GROUP;break;
                     case '=':groupType = Group.FORWARD_POSTIVE_SEARCH;break;
@@ -352,13 +355,13 @@ class RegexToASTree {
                             groupName = readGroupName();
                             break;
                         }
-                    default:throw new RuntimeException("error groupType");
+                    default:throw new RuntimeException("不支持的分组类型");
                 }
                 next();
             }
             int groupNum = -1;
             if(groupType == Group.CATCH_GROUP){
-                groupNum = ++groupCount;
+                groupNum = ++catchGroupCount;
             }
             Ast asTree = orTree();
             asTree.groupName = groupName;

@@ -6,12 +6,12 @@ import java.util.List;
 public class ASTPattern {
     final RegexToASTree regexToASTree;
     final Ast ast;
-    final List<Ast> groups;
+    final List<Ast> catchGroups;
 
     public ASTPattern(RegexToASTree regexToASTree) {
         this.regexToASTree = regexToASTree;
         this.ast = regexToASTree.astTree();
-        this.groups = regexToASTree.groupAsts;
+        this.catchGroups = regexToASTree.groupAsts;
     }
 
     public static ASTPattern compile(String regex) {

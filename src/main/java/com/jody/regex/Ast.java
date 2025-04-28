@@ -24,13 +24,13 @@ abstract class Ast implements Cloneable{
      */
     int groupType;
     /**
-     * 跳转到下个节点时，是否离开了一个group的范围
+     *  next 节点如果离开了组，离开组的编号
      */
-    boolean nextLeaveGroup;
+    int nextLeaveGroupNum = Util.NONE;
     /**
-     * 离开组的编号
+     * next节点离开组的类型
      */
-    int leaveGroupNum;
+    int nextLeaveGroupType = Util.NONE;
 
     /**
      * 当前节点以及所有子节点 最小/最大的编号
