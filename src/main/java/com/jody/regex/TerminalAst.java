@@ -107,7 +107,7 @@ class TerminalAst extends Ast implements Cloneable {
     /**
      * 返回匹配到的数量
      */
-    int match(String str, int i, int end) {
+    int match(String str, int i, int end,int modifier,boolean matchMode) {
         //边界符号，匹配成功返回0，因为边界符号不占空间
         if (Terminal.isB(type) || Terminal.isb(type)) {
             int result = isWordBorder(str, i);
@@ -125,12 +125,24 @@ class TerminalAst extends Ast implements Cloneable {
             if (i == 0) {
                 return 0;
             }
+            //查找模式下，开启了多行， \r \n 匹配 ^
+            if (!matchMode && i > 0 && Modifier.openMultiline(modifier)) {
+                if(str.charAt(i-1)=='\n'||(!Modifier.openUnixLine(modifier)&& str.charAt(i-1)=='\r')){
+                    return 0;
+                }
+            }
             return Util.NONE;
         }
         //结束符号
         if (Terminal.isEnd(type)) {
             if (i >= str.length()) {
                 return 0;
+            }
+            //查找模式下，开启了多行， \r \n 匹配 ^
+            if (!matchMode && Modifier.openMultiline(modifier)) {
+                if(str.charAt(i)=='\n'||(!Modifier.openUnixLine(modifier)&& str.charAt(i)=='\r')){
+                    return 0;
+                }
             }
             return -1;
         }
@@ -140,18 +152,28 @@ class TerminalAst extends Ast implements Cloneable {
             return Util.NONE;
         }
         char chi = str.charAt(i);
+        //大小写不敏感
+        boolean caseInsensitive = Modifier.openCaseInsensitive(modifier);
         // 普通的字符比较
         if (Terminal.isSimple(type)) {
             //单个字符比较
             if (this.c != null) {
-                return chi == this.c ? 1 : Util.NONE;
+                if(chi == this.c || caseInsensitive && Character.toLowerCase(chi) == Character.toLowerCase(this.c)) {
+                    return 1;
+                }
+                return Util.NONE;
             }
             if (i + cs.length() > end || i + cs.length() > str.length()) {
                 return Util.NONE;
             }
             //多个字符比较
             for (int x = 0; x < cs.length(); x++) {
-                if (str.charAt(i + x) != cs.charAt(x)) {
+                if (str.charAt(i + x) == cs.charAt(x)) {
+                    //什么也不做
+                } else if (caseInsensitive && Character.toLowerCase(str.charAt(i + x)) == Character.toLowerCase(cs.charAt(x))) {
+                    //什么也不做
+                } else {
+                    //匹配失败
                     return Util.NONE;
                 }
             }
@@ -161,8 +183,15 @@ class TerminalAst extends Ast implements Cloneable {
         boolean result = false;
         if (Terminal.isComposite(type)) {
             result = chars.contains(chi);
+            if (!result && caseInsensitive) {
+                if (Character.isUpperCase(chi)) {
+                    result = chars.contains(Character.toLowerCase(chi));
+                } else{
+                    result = chars.contains(Character.toUpperCase(chi));
+                }
+            }
             for (CharRange charRange : charRanges) {
-                result = result || charRange.match(chi);
+                result = result || charRange.match(chi,caseInsensitive);
                 if (result) {
                     break;
                 }
@@ -170,7 +199,7 @@ class TerminalAst extends Ast implements Cloneable {
         }
         //\d,\w...类型
         if (!result && type != 0) {
-            result = Terminal.match(chi, type);
+            result = Terminal.match(chi, type,modifier);
         }
         if (isNegative != result) {
             return 1;
@@ -227,8 +256,18 @@ class TerminalAst extends Ast implements Cloneable {
             this.right = right;
         }
 
-        boolean match(char ch) {
-            return ch >= left && ch <= right;
+        boolean match(char ch,boolean caseInsensitive) {
+            boolean result =ch >= left && ch <= right;
+            if (!result && caseInsensitive) {
+                if (Character.isUpperCase(ch)) {
+                    char temp = Character.toLowerCase(ch);
+                    result = temp>=left && temp<=right;
+                } else{
+                    char temp = Character.toUpperCase(ch);
+                    result = temp>=left && temp<=right;
+                }
+            }
+            return result;
         }
     }
 

@@ -166,7 +166,7 @@ class Terminal {
         return type == END;
     }
 
-    static boolean match(char ch,int type){
+    static boolean match(char ch,int type,int modifier){
         boolean result = false;
         if(isNumberType(type)){
             result = isNumber(ch);
@@ -174,9 +174,13 @@ class Terminal {
         if(isNotNumberType(type)){
             result = result || isNotNumber(ch);
         }
-        //todo 需要支持模式匹配
-        if(isDotType(type) && ch != '\r' && ch != '\n'){
-            result = true;
+        if(isDotType(type)){
+            // 默认 . 是不匹配换行的
+            if (Modifier.openDotAll(modifier)) {
+                result = true;
+            } else {
+                result = ch != '\r' && ch != '\n';
+            }
         }
         if(isWType(type)){
             result = result || isW(ch);

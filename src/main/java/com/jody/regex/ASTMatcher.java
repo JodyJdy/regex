@@ -34,10 +34,6 @@ public class ASTMatcher {
 
     private final String str;
 
-    /**
-     * 记录 递归非贪婪匹配的最终结果
-     */
-    Set<FindResult> recursiveNoGreedyResults = new HashSet<>();
 
     /**
      * 当前用作结尾的 节点
@@ -61,6 +57,16 @@ public class ASTMatcher {
      *记录numASt已经处理过的最大状态
      */
     final int[] numAstMaxI;
+
+    /**
+     * 记录处理分组时的 模式修正符，用于还原
+     */
+
+    final int[] groupModifier;
+    /**
+     * 模式修正符
+     */
+    int modifier = 0;
 
 
 
@@ -88,8 +94,10 @@ public class ASTMatcher {
          Arrays.fill(groupCatch,Util.NONE);
          numAstMaxI = new int[regexToASTree.numAstCount];
          numAstCircleNum = new int[regexToASTree.numAstCount];
+         groupModifier = new int[regexToASTree.modifierGroupCount];
          Arrays.fill(numAstCircleNum,0);
          Arrays.fill(numAstMaxI,Util.NONE);
+         this.modifier = pattern.modifiers;
     }
 
     /**
@@ -285,7 +293,7 @@ public class ASTMatcher {
                 return false;//searchRecursive(terminalAst, i, end);
             } else {
                 //普通字符的匹配
-                count = terminalAst.match(str, i, end);
+                count = terminalAst.match(str, i, end,modifier,matchMode);
             }
             // 匹配失败
             if (count < 0) {
@@ -295,6 +303,8 @@ public class ASTMatcher {
             return searchTree(getNextAndGroupEndCheck(terminalAst, i + count), i + count, end);
         }
         if (tree instanceof ModifierAst) {
+            modifier = modifier | tree.openFlag;
+            modifier = modifier & tree.closeFlag;
             return searchTree(getNextAndGroupEndCheck(tree, i), i, end);
         }
         if (tree instanceof CatAst) {
@@ -484,7 +494,11 @@ public class ASTMatcher {
             } else if (ast.groupType == Group.NOT_CATCH_GROUP) {
                 //do nothing
             } else if (ast.groupType == Group.NOT_CATCH_GROUP_WITH_MODIFIER) {
-                // todo
+                //记录当前的模式修正符
+                groupModifier[ast.groupNum - 1] = modifier;
+                //设置新的模式修正符号
+                modifier = modifier | ast.openFlag;
+                modifier = modifier & ast.closeFlag;
             } else {
                 //预查不消耗字符，为了复用原先的ast，需要记录ast当前状态，用于还原。表达式调用同理
                 Ast result = null;
@@ -538,6 +552,8 @@ public class ASTMatcher {
                 Ast leaveGroup = catchGroups.get(ast.nextLeaveGroupNum);
                 //捕获成功
                 groupCatch[leaveGroup.groupNum * 2 + 1] = i;
+            } else if(ast.nextLeaveGroupType == Group.NOT_CATCH_GROUP_WITH_MODIFIER) {
+                modifier = groupModifier[ast.nextLeaveGroupNum-1];
             }
         }
         return ast.getNext();
@@ -554,16 +570,6 @@ public class ASTMatcher {
      */
     public FindResult getFindResult() {
         return new FindResult(findResultStart,result);
-    }
-
-    /**
-     *递归非贪婪匹配模式下返回所有结果
-     */
-    public List<FindResult> getRecursiveNoGreedyFindResult() {
-        recursiveNoGreedyResults.add(new FindResult(findResultStart,result));
-        List<FindResult> findResults = new ArrayList<>(recursiveNoGreedyResults);
-        Collections.sort(findResults);
-        return findResults;
     }
 
     /**
