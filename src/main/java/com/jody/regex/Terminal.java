@@ -174,7 +174,8 @@ class Terminal {
         if(isNotNumberType(type)){
             result = result || isNotNumber(ch);
         }
-        if(isDotType(type)){
+        //todo 需要支持模式匹配
+        if(isDotType(type) && ch != '\r' && ch != '\n'){
             result = true;
         }
         if(isWType(type)){

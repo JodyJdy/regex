@@ -17,6 +17,10 @@ class RegexToASTree {
      * 捕获组的编号
      */
     int catchGroupCount = 0;
+    /**
+     * 模式修正编号
+     */
+    int modifierGroupCount = 0;
 
     /**
      * 可计数节点的编号
@@ -29,9 +33,9 @@ class RegexToASTree {
     int recursiveCount = 0;
 
     /**
-     * 收集所有的组
+     * 所有可以捕获的组
      */
-    List<Ast> groupAsts = new ArrayList<>();
+    List<Ast> catchGroups = new ArrayList<>();
 
 
     RegexToASTree(String regex) {
@@ -125,7 +129,7 @@ class RegexToASTree {
         tree2Linked(ast);
         //将自身当作编号为0的组
         ast.groupNum = 0;
-        groupAsts.add(0, ast);
+        catchGroups.add(0, ast);
         //设置节点中可计数节点的编号范围
         Util.setNodeMinMaxNumAstNo(ast);
         return ast;
@@ -330,51 +334,109 @@ class RegexToASTree {
         }
         // 遇到分组
         if (ch == '(') {
-            int groupType = Group.CATCH_GROUP;
-            next();
-            String groupName = null;
-            if (getCh() == '?') {
-                next();
-                // (?n)  开启命名捕获，默认开启
-                if (getCh() == 'n') {
-                   next();
-                }
-                switch (getCh()){
-                    case ':':groupType = Group.NOT_CATCH_GROUP;break;
-                    case '=':groupType = Group.FORWARD_POSTIVE_SEARCH;break;
-                    case '!':groupType = Group.FORWARD_NEGATIVE_SEARCH;break;
-                    case '<':next();
-                        if (getCh() == '=') {
-                            groupType = Group.BACKWARD_POSTIVE_SEARCH;
-                            break;
-                        } else if (getCh() == '!') {
-                            groupType = Group.BACKWARD_NEGATIVE_SEARCH;
-                            break;
-                        } else{
-                            //分组命名
-                            groupName = readGroupName();
-                            break;
-                        }
-                    default:throw new RuntimeException("不支持的分组类型");
-                }
-                next();
-            }
-            int groupNum = -1;
-            if(groupType == Group.CATCH_GROUP){
-                groupNum = ++catchGroupCount;
-            }
-            Ast asTree = orTree();
-            asTree.groupName = groupName;
-            next();
-            asTree.groupNum = groupNum;
-            asTree.groupType = groupType;
-            if (groupType == Group.CATCH_GROUP) {
-                groupAsts.add(asTree);
-            }
-            return asTree;
+            return processGroup();
         }
         next();
         return new TerminalAst(ch, Terminal.SIMPLE);
+    }
+    private Ast processGroup(){
+        int groupType = Group.CATCH_GROUP;
+        next();
+        String groupName = null;
+        //处理模式修饰符 openFlag bit全为0，closeFlag全为1
+        int openFlag = 0, closeFlag = Util.NONE;
+        if (getCh() == '?') {
+            next();
+            // (?n)  开启命名捕获，默认开启
+            if (getCh() == 'n') {
+                next();
+            }
+            //遇到- 号
+            boolean negative = false;
+            while (!isEnd()) {
+                char ch = getCh();
+                if(ch == '-'){
+                    negative = true;
+                    next();
+                    continue;
+                } else if(ch == 'd'){
+                    openFlag |= negative ? openFlag: Modifier.UNIX_LINES;
+                    closeFlag &= negative ? Modifier.CLOSE_UNIX_LINES : closeFlag;
+                }  else if(ch =='i'){
+                    openFlag |= negative ? openFlag: Modifier.CASE_INSENSITIVE;
+                    closeFlag &= negative ? Modifier.CLOSE_CASE_INSENSITIVE : closeFlag;
+                } else if(ch == 'x'){
+                    openFlag |= negative ? openFlag: Modifier.COMMENT;
+                    closeFlag &= negative ? Modifier.CLOSE_COMMENT : closeFlag;
+                } else if (ch == 'm') {
+                    openFlag |= negative ? openFlag: Modifier.MULTILINE;
+                    closeFlag &= negative ? Modifier.CLOSE_MULTILINE : closeFlag;
+                } else if (ch == 's') {
+                    openFlag |= negative ? openFlag: Modifier.DOTALL;
+                    closeFlag &= negative ? Modifier.CLOSE_DOTALL : closeFlag;
+                } else if(ch ==')'){
+                    // -) 错误的结尾
+                    if (negative) {
+                        throw new RuntimeException("不支持的分组类型");
+                    }
+                    // 全局模式修正符
+                    next();
+                    ModifierAst modifierAst = new ModifierAst();
+                    modifierAst.setModifierFlag(openFlag,closeFlag);
+                    return modifierAst;
+                } else if(ch == ':'){
+                    break;
+                } else{
+                    break;
+                }
+                negative = false;
+                next();
+            }
+            switch (getCh()){
+                case ':':
+                    //说明有模式修正符
+                    if(openFlag !=0 || closeFlag !=Util.NONE){
+                        groupType = Group.NOT_CATCH_GROUP_WITH_MODIFIER;
+                    } else{
+                        groupType = Group.NOT_CATCH_GROUP;
+                    }
+                    break;
+                case '=':groupType = Group.FORWARD_POSTIVE_SEARCH;break;
+                case '!':groupType = Group.FORWARD_NEGATIVE_SEARCH;break;
+                case '<':next();
+                    if (getCh() == '=') {
+                        groupType = Group.BACKWARD_POSTIVE_SEARCH;
+                        break;
+                    } else if (getCh() == '!') {
+                        groupType = Group.BACKWARD_NEGATIVE_SEARCH;
+                        break;
+                    } else{
+                        //分组命名
+                        groupName = readGroupName();
+                        break;
+                    }
+                default:throw new RuntimeException("不支持的分组类型");
+            }
+            next();
+        }
+        int groupNum = -1;
+        if(groupType == Group.CATCH_GROUP){
+            groupNum = ++catchGroupCount;
+        } else if (groupType == Group.NOT_CATCH_GROUP_WITH_MODIFIER) {
+            groupNum = ++modifierGroupCount;
+        }
+        Ast asTree = orTree();
+        next();
+        //设置组信息
+        asTree.groupName = groupName;
+        asTree.groupNum = groupNum;
+        asTree.groupType = groupType;
+        asTree.openFlag = openFlag;
+        asTree.closeFlag = closeFlag;
+        if (groupType == Group.CATCH_GROUP) {
+            catchGroups.add(asTree);
+        }
+        return asTree;
     }
     private String readGroupName() {
         StringBuilder sb = new StringBuilder();

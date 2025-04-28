@@ -294,6 +294,9 @@ public class ASTMatcher {
             // 匹配成功，继续搜索
             return searchTree(getNextAndGroupEndCheck(terminalAst, i + count), i + count, end);
         }
+        if (tree instanceof ModifierAst) {
+            return searchTree(getNextAndGroupEndCheck(tree, i), i, end);
+        }
         if (tree instanceof CatAst) {
             CatAst cat = (CatAst) tree;
             return searchTree(cat.asts.get(0), i, end);
@@ -480,6 +483,8 @@ public class ASTMatcher {
                 groupCatch[ast.groupNum * 2] = i;
             } else if (ast.groupType == Group.NOT_CATCH_GROUP) {
                 //do nothing
+            } else if (ast.groupType == Group.NOT_CATCH_GROUP_WITH_MODIFIER) {
+                // todo
             } else {
                 //预查不消耗字符，为了复用原先的ast，需要记录ast当前状态，用于还原。表达式调用同理
                 Ast result = null;
@@ -488,7 +493,7 @@ public class ASTMatcher {
                 Ast next = ast.getNext();
                 // 将next设置为当前的end节点
                 Ast endAst = curEndAst;
-                curEndAst =  next;
+                curEndAst = next;
                 //预查使用匹配模式
                 this.matchMode = true;
                 //查询前，需要将ast的groupType设置成非预查模式，不然会不断的进入这里的代码，
@@ -529,9 +534,9 @@ public class ASTMatcher {
      */
     private Ast getNextAndGroupEndCheck(Ast ast, int i) {
         if (ast.nextLeaveGroupNum >=0) {
-            Ast leaveGroup = catchGroups.get(ast.nextLeaveGroupNum);
-            //捕获成功
-            if (leaveGroup.groupType == Group.CATCH_GROUP) {
+            if (ast.nextLeaveGroupType == Group.CATCH_GROUP) {
+                Ast leaveGroup = catchGroups.get(ast.nextLeaveGroupNum);
+                //捕获成功
                 groupCatch[leaveGroup.groupNum * 2 + 1] = i;
             }
         }

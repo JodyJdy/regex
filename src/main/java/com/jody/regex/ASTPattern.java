@@ -11,7 +11,7 @@ public class ASTPattern {
     public ASTPattern(RegexToASTree regexToASTree) {
         this.regexToASTree = regexToASTree;
         this.ast = regexToASTree.astTree();
-        this.catchGroups = regexToASTree.groupAsts;
+        this.catchGroups = regexToASTree.catchGroups;
     }
 
     public static ASTPattern compile(String regex) {
