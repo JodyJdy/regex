@@ -444,19 +444,18 @@ public class ASTMatcher {
             if (curCircle + 1 <= rangeAst.end) {
                 numAstCircleNum[numAstNo] = curCircle + 1;
                 if (searchTree(rangeAst.ast, i, end)) {
-                    numAstCircleNum[numAstNo]= 0;
-                    numAstMaxI[numAstNo] = Util.NONE;
                     return true;
                 }
             }
+            numAstCircleNum[numAstNo]= 0;
             return searchTree(getNextAndGroupEndCheck(rangeAst, i), i, end);
             //match模式 或者 find模式的非贪心查找
         } else {
+            numAstCircleNum[numAstNo] = 0;
             if (searchTree(getNextAndGroupEndCheck(rangeAst, i), i, end)) {
-                numAstCircleNum[numAstNo] = 0;
-                numAstMaxI[numAstNo] = Util.NONE;
                 return true;
             }
+            numAstMaxI[numAstNo] = Util.NONE;
             if (curCircle + 1 <= rangeAst.end) {
                 numAstCircleNum[numAstNo] = curCircle + 1;
                 return searchTree(rangeAst.ast, i, end);
