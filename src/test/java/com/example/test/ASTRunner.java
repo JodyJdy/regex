@@ -8,24 +8,28 @@ import java.util.regex.Pattern;
 
 public class ASTRunner {
     public static void main(String[] args) {
-        //高级特性测试
+
         test();
+        executeTestCase();
+
+    }
+    public static void test(){
+        //        //高级特性测试
+        testFeature();
         //测试replace方法
         testReplace();
         //测试分组
         testGroup();
-        //性能测试， 匹配邮箱的场景性能比原生的要高
         String emailRex = "[\\w!#$%&'*+/=?^_`{|}~-]+(\\.[\\w!#$%&'*+/=?^_`{|}~-]+)*@([\\w]([\\w-]*[\\w])?\\.)+[\\w]([\\w-]*[\\w])?";
         String email = "abc@qq.com";
         performanceCompare(emailRex,email,1000000);
-        //性能测试
         performanceCompare("\\babc\\b","abc",1000000);
     }
 
     /**
      * 测试，主要是高级特性
      */
-    public static void test() {
+    public static void testFeature() {
         System.out.println("--------------------test-------------------");
         //匹配中文
         ASTPattern utfPattern = ASTPattern.compile("[\u4E00-\u9FA5]");
@@ -61,33 +65,8 @@ public class ASTRunner {
         //分组捕获
         ASTPattern matcher5 = ASTPattern.compile("(abc)cd\\1\\1");
         System.out.println(matcher5.matcher("abccdabcabcalsdkjfisod").find());
-        //表达式引用
-        ASTPattern matcher6 = ASTPattern.compile("(a|b|c)xx\\g<1>");
-        System.out.println(matcher6.matcher("axxb").isMatch());
 
     }
-//    /**
-//     * 测试递归
-//     * match不支持 递归引用， find支持
-//     */
-//    public static void testRecursive(){
-//        System.out.println("--------------------testRecursive-------------------");
-//        //测试 递归贪婪匹配
-//        ASTPattern astPattern = ASTPattern.compile("\\{\\}|\\{('\\w+':('\\w+'|\\d+|\\g<0>),)+'\\w+':('\\w+'|\\d+|\\g<0>)}|\\{'\\w+':('\\w+'|\\d+|\\g<0>)\\}");
-//        ASTMatcher matcher = astPattern.matcher("{'key1':'value1','key2':123,'key3':{},'key4':{'key5':'value5'}}");
-//        System.out.println(matcher.find());
-//        System.out.println(matcher.getFindResult());
-//        // 递归贪婪匹配会尽可能的多匹配字符
-//        System.out.println(matcher.getRecursiveNoGreedyFindResult());
-//        //测试 递归非贪婪匹配
-//        ASTPattern astPattern2 = ASTPattern.compile("\\{\\}|\\{('\\w+':('\\w+'|\\d+|\\g<0>?),)+'\\w+':('\\w+'|\\d+|\\g<0>?)}|\\{'\\w+':('\\w+'|\\d+|\\g<0>?)\\}");
-//        ASTMatcher matcher2 = astPattern2.matcher("{'key1':'value1','key2':123,'key3':{},'key4':{'key5':'value5'}}");
-//        System.out.println(matcher2.find());
-//        System.out.println(matcher2.getFindResult());
-//        //递归非贪婪匹配， 尽可能少的匹配
-//        System.out.println(matcher2.getRecursiveNoGreedyFindResult());
-//    }
-
     /**
      *测试 replace
      */
@@ -134,5 +113,17 @@ public class ASTRunner {
         }
         long end2 = System.currentTimeMillis();
         System.out.println("自己Regex:" + (end2 - start2));
+    }
+    public static void executeTestCase(){
+       for(int i=0;i<TestCase.regexs.length;i++){
+          Pattern pattern = Pattern.compile(TestCase.regexs[i]);
+          ASTPattern astPattern = ASTPattern.compile(TestCase.regexs[i]);
+           for (String str : TestCase.tests[i]) {
+              if(pattern.matcher(str).matches() != astPattern.matcher(str).isMatch()){
+                  System.out.println("测试错误: regex:"+ TestCase.regexs[i]+ "\n str +"+str);
+              }
+           }
+           System.out.println("通过");
+       }
     }
 }
