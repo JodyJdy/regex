@@ -481,6 +481,9 @@ public class ASTMatcher {
             numAstCircleNum[unfixed.numAstNo]++;
             return searchTree(unfixed.ast, i, end);
         }
+        if (shouldReturn(unfixed, i)) {
+            return false;
+        }
         //还原
         numAstCircleNum[unfixed.numAstNo] = 0;
         return searchTree(getNextAndGroupEndCheck(unfixed, i), i, end);
