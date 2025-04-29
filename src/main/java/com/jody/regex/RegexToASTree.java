@@ -276,12 +276,7 @@ class RegexToASTree {
             if (Terminal.isNumber(ch)) {
                 int groupCount = getNum();
                 terminator = new TerminalAst(Terminal.GROUP_CAPTURE | groupCount);
-            }else if(ch == 'x'){
-                next();
-                ch = (char) getHexNum();
-                terminator = new TerminalAst(ch, Terminal.SIMPLE);
-            }
-            else {
+            } else {
                 int type = getTerminalType(ch);
                 if (type == Terminal.SIMPLE) {
                     terminator = new TerminalAst(ch, Terminal.SIMPLE);
@@ -464,14 +459,5 @@ class RegexToASTree {
         }
         return num;
     }
-    private int getHexNum(){
-        StringBuilder sb = new StringBuilder();
-        sb.append(getCh());
-        next();
-        sb.append(getCh());
-        next();
-        return Integer.valueOf(sb.toString(), 16);
-    }
-
 
 }
