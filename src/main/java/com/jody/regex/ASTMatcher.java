@@ -434,7 +434,11 @@ public class ASTMatcher {
         int curCircle = numAstCircleNum[numAstNo];
         if (curCircle < rangeAst.start) {
             numAstCircleNum[numAstNo]++;
-            return searchTree(rangeAst.ast, i, end);
+            boolean b = searchTree(rangeAst.ast, i, end);
+            if (!b) {
+                numAstCircleNum[numAstNo] = 0;
+            }
+            return b;
         }
         if (shouldReturn(rangeAst, i)) {
             return false;
@@ -479,7 +483,11 @@ public class ASTMatcher {
     private boolean searchFixedAst(NumAst unfixed, int i, int end) {
         if (numAstCircleNum[unfixed.numAstNo] != unfixed.num) {
             numAstCircleNum[unfixed.numAstNo]++;
-            return searchTree(unfixed.ast, i, end);
+            boolean result =searchTree(unfixed.ast, i, end);
+            if (!result) {
+               numAstCircleNum[unfixed.numAstNo] = 0;
+            }
+            return result;
         }
         if (shouldReturn(unfixed, i)) {
             return false;

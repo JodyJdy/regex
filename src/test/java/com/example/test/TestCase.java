@@ -120,6 +120,10 @@ public class TestCase {
              * email
             */
             "^[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\\.)+(?:[a-zA-Z]{2}|aero|asia|biz|cat|com|coop|edu|gov|info|int|jobs|mil|mobi|museum|name|net|org|pro|tel|travel)$",
+            /**
+             *phone number
+            */
+            "^([+][0-9]{1,3}([ .\\-])?)?([(][0-9]{3}[)])?([0-9A-Z .\\-]{1,32})((x|ext|extension)?[0-9]{1,4}?)$",
 
 
 
@@ -159,7 +163,8 @@ public class TestCase {
                 new String[]{"6011-1111-1111-1111","5423-1111-1111-1111","341111111111111"},
                 new String[]{"1200","1645","2359"},
                 new String[]{"foo.gif","foo.jpg","foo.png"},
-                new String[]{"email@email.com","email@email.cn","e_m81l&em%'l@eMail.MUSEUM","email@em@il.com"}
+                new String[]{"email@email.com","email@email.cn","e_m81l&em%'l@eMail.MUSEUM","email@em@il.com"},
+                new String[]{"(123)456-7890","(123)456-7890 x123","+1 (123)456-7890","12 3456 789 0 x1234","(123)456-7890x123","+12 34 56 7890"}
 
 
         };
