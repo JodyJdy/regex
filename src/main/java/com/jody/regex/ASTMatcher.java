@@ -26,12 +26,6 @@ public class ASTMatcher {
      */
     boolean matchMode;
 
-
-    /**
-     * 记录表达式引用的层级，match模式下使用到
-     */
-    int expressionLevel = 0;
-
     private final String str;
 
 
@@ -73,7 +67,7 @@ public class ASTMatcher {
     private boolean strIsEnd(int i, int end) {
         //当 match模式且expressionLevel > 0时，说明处于表达式匹配，且已经匹配到了结尾
         //只要 i >searchStart，就记录一个结果到result中
-        boolean find = (matchMode && (i == end || expressionLevel > 0 && i >= findResultStart)) || (!matchMode && i >= findResultStart);
+        boolean find = (matchMode && (i == end)) || (!matchMode && i >= findResultStart);
         if (find) {
             result = i;
         }
@@ -440,6 +434,7 @@ public class ASTMatcher {
             return false;
         }
         //find模式 且是贪心查找，特殊处理
+        // 这里不用保留状态是因为，优先处理 rangeAst.ast节点
         if (!matchMode && rangeAst.greedy) {
             if (curCircle + 1 <= rangeAst.end) {
                 numAstCircleNum[numAstNo] = curCircle + 1;
@@ -447,18 +442,26 @@ public class ASTMatcher {
                     return true;
                 }
             }
+            //搜索下个节点时，清除当前状态
             numAstCircleNum[numAstNo]= 0;
             return searchTree(getNextAndGroupEndCheck(rangeAst, i), i, end);
             //match模式 或者 find模式的非贪心查找
         } else {
-            numAstCircleNum[numAstNo] = 0;
+            //需要保留当前状态,如果搜索失败后，当前状态需要在后续的搜索使用到
+            NumAstStatus matcherStatus = new NumAstStatus(this, rangeAst);
             if (searchTree(getNextAndGroupEndCheck(rangeAst, i), i, end)) {
                 return true;
             }
+            matcherStatus.resumeStatus();
             numAstMaxI[numAstNo] = Util.NONE;
             if (curCircle + 1 <= rangeAst.end) {
                 numAstCircleNum[numAstNo] = curCircle + 1;
-                return searchTree(rangeAst.ast, i, end);
+                // 搜索失败，还原状态
+                boolean suc =  searchTree(rangeAst.ast, i, end);
+                if (!suc) {
+                    numAstCircleNum[numAstNo] = curCircle;
+                }
+                return suc;
             }
         }
         return false;
