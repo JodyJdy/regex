@@ -22,7 +22,7 @@ public class ASTPattern {
     public static ASTPattern compile(String regex,int modifiers) {
         Util.checkEmpty(regex);
         String preprocessed = preprocess(regex);
-        RegexToASTree regexToASTree = new RegexToASTree(preprocessed);
+        RegexToASTree regexToASTree = new RegexToASTree(preprocessed,modifiers != 0);
         return new ASTPattern(regexToASTree,modifiers);
     }
 

@@ -37,9 +37,19 @@ class RegexToASTree {
      */
     List<Ast> catchGroups = new ArrayList<>();
 
+    /**
+     * 是否有模式修正符
+     */
+    boolean hasModifier = false;
+    /**
+     * 存储所有的组
+     */
+    List<Ast> allGroups = new ArrayList<>();
 
-    RegexToASTree(String regex) {
+
+    RegexToASTree(String regex,boolean hasModifier) {
         this.regex = regex;
+        this.hasModifier = hasModifier;
     }
 
     public boolean isEnd() {
