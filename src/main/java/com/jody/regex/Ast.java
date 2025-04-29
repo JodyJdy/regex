@@ -12,9 +12,14 @@ abstract class Ast implements Cloneable{
     private Ast next;
 
     /**
-     *  如果是一个分组，那么groupNum 不为0
+     *  捕获分组编号
      */
-    int groupNum;
+    int catchGroupNum = -1;
+
+    /**
+     * 全局分组编号
+     */
+    int globalGroupNum = -1;
     /**
      * 分组命名
      */
@@ -24,7 +29,7 @@ abstract class Ast implements Cloneable{
      */
     int groupType;
     /**
-     *  next 节点如果离开了组，离开组的编号
+     *  next 节点如果离开了组，离开组的编号，使用全局编号
      */
     int nextLeaveGroupNum = Util.NONE;
     /**

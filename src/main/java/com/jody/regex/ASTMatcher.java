@@ -55,12 +55,14 @@ public class ASTMatcher {
     /**
      * 记录处理分组时的 模式修正符，用于还原
      */
-
-    final int[] groupModifier;
+    int[] groupModifier;
     /**
      * 模式修正符
      */
     int modifier = 0;
+
+    final boolean hasModifier;
+    final List<Ast> allGroups;
 
 
 
@@ -82,15 +84,19 @@ public class ASTMatcher {
      ASTMatcher(ASTPattern pattern,String str) {
          RegexToASTree regexToASTree = pattern.regexToASTree;
          this.regex = pattern.ast;
-         this.catchGroups = pattern.catchGroups;
+         this.catchGroups = regexToASTree.catchGroups;
          this.str = str;
          groupCatch = new int[catchGroups.size() * 2];
          Arrays.fill(groupCatch,Util.NONE);
          numAstMaxI = new int[regexToASTree.numAstCount];
          numAstCircleNum = new int[regexToASTree.numAstCount];
-         groupModifier = new int[regexToASTree.modifierGroupCount];
          Arrays.fill(numAstCircleNum,0);
          Arrays.fill(numAstMaxI,Util.NONE);
+         allGroups = regexToASTree.allGroups;
+         hasModifier = regexToASTree.hasModifier;
+         if (hasModifier) {
+             groupModifier = new int[regexToASTree.globalGroupCount];
+         }
          this.modifier = pattern.modifiers;
     }
 
@@ -493,16 +499,19 @@ public class ASTMatcher {
             }
         }
         if (ast.groupType != 0) {
-            if (ast.groupType == Group.CATCH_GROUP) {
-                groupCatch[ast.groupNum * 2] = i;
-            } else if (ast.groupType == Group.NOT_CATCH_GROUP) {
-                //do nothing
-            } else if (ast.groupType == Group.NOT_CATCH_GROUP_WITH_MODIFIER) {
+            if (hasModifier) {
                 //记录当前的模式修正符
-                groupModifier[ast.groupNum - 1] = modifier;
+                groupModifier[ast.globalGroupNum] = modifier;
                 //设置新的模式修正符号
                 modifier = modifier | ast.openFlag;
                 modifier = modifier & ast.closeFlag;
+            }
+            if (ast.groupType == Group.CATCH_GROUP) {
+                groupCatch[ast.catchGroupNum * 2] = i;
+            } else if (ast.groupType == Group.NOT_CATCH_GROUP) {
+                //do nothing
+            } else if (ast.groupType == Group.NOT_CATCH_GROUP_WITH_MODIFIER) {
+                // do nothing
             } else {
                 //预查不消耗字符，为了复用原先的ast，需要记录ast当前状态，用于还原。表达式调用同理
                 Ast result = null;
@@ -553,11 +562,13 @@ public class ASTMatcher {
     private Ast getNextAndGroupEndCheck(Ast ast, int i) {
         if (ast.nextLeaveGroupNum >=0) {
             if (ast.nextLeaveGroupType == Group.CATCH_GROUP) {
-                Ast leaveGroup = catchGroups.get(ast.nextLeaveGroupNum);
+               Ast leaveGroup = allGroups.get(ast.nextLeaveGroupNum);
                 //捕获成功
-                groupCatch[leaveGroup.groupNum * 2 + 1] = i;
-            } else if(ast.nextLeaveGroupType == Group.NOT_CATCH_GROUP_WITH_MODIFIER) {
-                modifier = groupModifier[ast.nextLeaveGroupNum-1];
+                groupCatch[leaveGroup.catchGroupNum * 2 + 1] = i;
+            }
+            //还原模式修正符号
+            if (hasModifier) {
+                modifier = groupModifier[ast.nextLeaveGroupNum];
             }
         }
         return ast.getNext();
@@ -580,8 +591,6 @@ public class ASTMatcher {
      *根据组编号返回捕获的组
      */
     public String group(int groupNum) {
-        // \\1 捕获第一个组， 访问时，则使用 group(0)
-        groupNum++;
         if(groupNum == catchGroups.size()){
             return null;
         }
@@ -602,8 +611,8 @@ public class ASTMatcher {
         }
         for (Ast ast : catchGroups) {
            if(groupName.equals(ast.groupName)){
-               int left = groupCatch[ast.groupNum*2];
-               int right = groupCatch[ast.groupNum * 2 + 1];
+               int left = groupCatch[ast.catchGroupNum *2];
+               int right = groupCatch[ast.catchGroupNum * 2 + 1];
                if(left == Util.NONE || right == Util.NONE){
                    return null;
                }

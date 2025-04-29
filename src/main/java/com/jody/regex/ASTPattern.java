@@ -1,18 +1,14 @@
 package com.jody.regex;
 
 
-import java.util.List;
-
 public class ASTPattern {
     final RegexToASTree regexToASTree;
     final Ast ast;
-    final List<Ast> catchGroups;
     final int modifiers;
 
     public ASTPattern(RegexToASTree regexToASTree,int modifiers) {
         this.regexToASTree = regexToASTree;
         this.ast = regexToASTree.astTree();
-        this.catchGroups = regexToASTree.catchGroups;
         this.modifiers = modifiers;
     }
 

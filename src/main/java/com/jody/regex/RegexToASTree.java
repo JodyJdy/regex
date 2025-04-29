@@ -1,10 +1,7 @@
 package com.jody.regex;
 
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * 正则表达式 转 抽象语法树
@@ -13,6 +10,11 @@ class RegexToASTree {
 
     private final String regex;
     int i = 0;
+
+    /**
+     * 全部组的编号
+     */
+    int globalGroupCount = 0;
     /**
      * 捕获组的编号
      */
@@ -92,8 +94,8 @@ class RegexToASTree {
      * 将 抽象语法树，调整成 链表， 链表的顺序就是 搜索时的顺序，使用Ast的next节点调整
      */
     private static void tree2Linked(Ast ast) {
-        if (ast.groupNum != 0) {
-            ast.nextLeaveGroupNum = ast.groupNum;
+        if (ast.globalGroupNum != Util.NONE) {
+            ast.nextLeaveGroupNum = ast.globalGroupNum;
             ast.nextLeaveGroupType = ast.groupType;
         }
         if (ast instanceof TerminalAst) {
@@ -103,7 +105,7 @@ class RegexToASTree {
             OrAst orAst = (OrAst) ast;
             for (Ast node : orAst.asts) {
                 node.setNext(orAst.getNext());
-                node.nextLeaveGroupNum = orAst.nextLeaveGroupNum;
+                node.nextLeaveGroupNum = orAst.globalGroupNum;
                 node.nextLeaveGroupType = orAst.nextLeaveGroupType;
                 tree2Linked(node);
             }
@@ -113,7 +115,7 @@ class RegexToASTree {
             int len = asts.size();
             Ast last = asts.get(len - 1);
             last.setNext(ast.getNext());
-            last.nextLeaveGroupNum = ast.nextLeaveGroupNum;
+            last.nextLeaveGroupNum = ast.globalGroupNum;
             last.nextLeaveGroupType = ast.nextLeaveGroupType;
             for(int x = 0; x < len - 1;x++){
                 asts.get(x).setNext(asts.get(x+1));
@@ -127,7 +129,7 @@ class RegexToASTree {
             //对? 进行优化，直接进行链接
             if (numAst.type.equals(NumAst.MOST_1)) {
                 numAst.ast.setNext(numAst.getNext());
-                numAst.ast.nextLeaveGroupNum = numAst.nextLeaveGroupNum;
+                numAst.ast.nextLeaveGroupNum = numAst.globalGroupNum;
                 numAst.ast.nextLeaveGroupType = numAst.nextLeaveGroupType;
             } else {
                 numAst.ast.setNext(numAst);
@@ -141,12 +143,14 @@ class RegexToASTree {
         Ast ast = orTree();
         ast.setNext(Util.END_AST);
         tree2Linked(ast);
-        //将自身当作编号为0的组
-        ast.groupNum = 0;
-        catchGroups.add(0, ast);
         //设置节点中可计数节点的编号范围
         Util.setNodeMinMaxNumAstNo(ast);
+        sortGroups();
         return ast;
+    }
+    private  void sortGroups(){
+        allGroups.sort(Comparator.comparingInt(x -> x.globalGroupNum));
+        catchGroups.sort(Comparator.comparingInt(x -> x.catchGroupNum));
     }
 
     private Ast orTree() {
@@ -392,6 +396,7 @@ class RegexToASTree {
                     next();
                     ModifierAst modifierAst = new ModifierAst();
                     modifierAst.setModifierFlag(openFlag,closeFlag);
+                    hasModifier = true;
                     return modifierAst;
                 } else if(ch == ':'){
                     break;
@@ -405,6 +410,7 @@ class RegexToASTree {
                 case ':':
                     //说明有模式修正符
                     if(openFlag !=0 || closeFlag !=Util.NONE){
+                        hasModifier = true;
                         groupType = Group.NOT_CATCH_GROUP_WITH_MODIFIER;
                     } else{
                         groupType = Group.NOT_CATCH_GROUP;
@@ -428,23 +434,24 @@ class RegexToASTree {
             }
             next();
         }
-        int groupNum = -1;
+        int catchGroupNum = -1;
         if(groupType == Group.CATCH_GROUP){
-            groupNum = ++catchGroupCount;
-        } else if (groupType == Group.NOT_CATCH_GROUP_WITH_MODIFIER) {
-            groupNum = ++modifierGroupCount;
+           catchGroupNum = catchGroupCount++;
         }
+        int groupNum = globalGroupCount++;
         Ast asTree = orTree();
         next();
         //设置组信息
         asTree.groupName = groupName;
-        asTree.groupNum = groupNum;
+        asTree.catchGroupNum = catchGroupNum;
         asTree.groupType = groupType;
+        asTree.globalGroupNum = groupNum;
         asTree.openFlag = openFlag;
         asTree.closeFlag = closeFlag;
         if (groupType == Group.CATCH_GROUP) {
             catchGroups.add(asTree);
         }
+        allGroups.add(asTree);
         return asTree;
     }
     private String readGroupName() {
