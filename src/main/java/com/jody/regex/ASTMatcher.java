@@ -448,7 +448,7 @@ public class ASTMatcher {
             //match模式 或者 find模式的非贪心查找
         } else {
             //需要保留当前状态,如果搜索失败后，当前状态需要在后续的搜索使用到
-            NumAstStatus matcherStatus = new NumAstStatus(this, rangeAst);
+            NumAstStatus matcherStatus = new NumAstStatus(rangeAst);
             if (searchTree(getNextAndGroupEndCheck(rangeAst, i), i, end)) {
                 return true;
             }
@@ -507,7 +507,7 @@ public class ASTMatcher {
                 //预查不消耗字符，为了复用原先的ast，需要记录ast当前状态，用于还原。表达式调用同理
                 Ast result = null;
                 //记录好当前状态，并做好预查的准备
-                MatcherStatus matcherStatus = new MatcherStatus(this, ast);
+                MatcherStatus matcherStatus = new MatcherStatus(ast);
                 Ast next = ast.getNext();
                 // 将next设置为当前的end节点
                 Ast endAst = curEndAst;
@@ -674,5 +674,79 @@ public class ASTMatcher {
 //        boolean recursiveSuc = searchTree(regex, i, end)&&searchTree(getNextAndGroupEndCheck(recursive, this.result),this.result,end);
 //        expressionLevel--;
 //        return recursiveSuc;
+    }
+
+    /**
+     * 记录 NumAst状态
+     */
+    class NumAstStatus {
+        final Ast searchAst;
+        int[] numAstCircleNum;
+
+        NumAstStatus(Ast searchAst) {
+            this.searchAst = searchAst;
+            int len = searchAst.nodeMaxNumAstNo - searchAst.nodeMinNumAstNo + 1;
+            numAstCircleNum = new int[len];
+            int nodeMinNumAstNo = searchAst.nodeMinNumAstNo;
+            System.arraycopy(ASTMatcher.this.numAstCircleNum, nodeMinNumAstNo, numAstCircleNum, 0, len);
+            Arrays.fill(ASTMatcher.this.numAstCircleNum, nodeMinNumAstNo, nodeMinNumAstNo + len, 0);
+        }
+
+        void resumeStatus() {
+            // 状态还原
+            int nodeMinNumAstNo = searchAst.nodeMinNumAstNo;
+            System.arraycopy(numAstCircleNum, 0, ASTMatcher.this.numAstCircleNum, nodeMinNumAstNo, numAstCircleNum.length);
+        }
+    }
+
+    /**
+     * 记录 ASTMatcher的状态
+     */
+    class MatcherStatus {
+
+        private final int searchStart;
+        private final int findResult;
+        private final boolean matchMood;
+
+        int[] numAstCircleNum;
+        /**
+         *记录numASt已经处理过的最大状态
+         */
+        int[] numAstMaxI;
+
+        private final Ast searchAst;
+
+        MatcherStatus(Ast searchAst){
+            this.searchStart = ASTMatcher.this.findResultStart;
+            this.findResult = ASTMatcher.this.result;
+            this.matchMood = ASTMatcher.this.matchMode;
+            //默认值
+            ASTMatcher.this.findResultStart = ASTMatcher.this.result = 0;
+            this.searchAst =searchAst;
+            //存储ast的状态，例如： maxI, circleNum
+            if (searchAst.nodeMaxNumAstNo != Util.NONE) {
+                int len = searchAst.nodeMaxNumAstNo - searchAst.nodeMinNumAstNo+1;
+                numAstCircleNum = new int[len];
+                numAstMaxI = new int[len];
+                int nodeMinNumAstNo = searchAst.nodeMinNumAstNo;
+                System.arraycopy(ASTMatcher.this.numAstMaxI, nodeMinNumAstNo, numAstMaxI, 0, len);
+                System.arraycopy(ASTMatcher.this.numAstCircleNum, nodeMinNumAstNo, numAstCircleNum, 0, len);
+                Arrays.fill(ASTMatcher.this.numAstMaxI,nodeMinNumAstNo,nodeMinNumAstNo+len,Util.NONE);
+                Arrays.fill(ASTMatcher.this.numAstCircleNum, nodeMinNumAstNo, nodeMinNumAstNo + len, 0);
+            }
+        }
+
+        void resumeStatus(){
+            ASTMatcher.this.findResultStart = this.searchStart;
+            ASTMatcher.this.result = this.findResult;
+            ASTMatcher.this.matchMode = this.matchMood;
+            // 状态还原
+            if (searchAst.nodeMaxNumAstNo != Util.NONE) {
+                int nodeMinNumAstNo = searchAst.nodeMinNumAstNo;
+                System.arraycopy(numAstMaxI,0,ASTMatcher.this.numAstMaxI,nodeMinNumAstNo,numAstMaxI.length);
+                System.arraycopy(numAstCircleNum,0,ASTMatcher.this.numAstCircleNum,nodeMinNumAstNo,numAstMaxI.length);
+            }
+        }
+
     }
 }
