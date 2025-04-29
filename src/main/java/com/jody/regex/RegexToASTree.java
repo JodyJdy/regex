@@ -70,6 +70,10 @@ class RegexToASTree {
         i++;
     }
 
+    /**
+     * todo
+     * 处理 \\x转移
+     */
     private char getCh() {
         return regex.charAt(i);
     }
