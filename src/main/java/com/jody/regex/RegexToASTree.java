@@ -154,12 +154,25 @@ class RegexToASTree {
     }
 
     private Ast orTree() {
-        Ast left = catTree();
-        List<Ast> asts = new ArrayList<>();
-        asts.add(left);
+        //跳过空分支 |
         while (!isEnd() && getCh() == '|') {
             next();
+        }
+        List<Ast> asts = new ArrayList<>();
+        if (isEnd()) {
+            return new OrAst(asts);
+        }
+        Ast left = catTree();
+        asts.add(left);
+        while (!isEnd() && getCh()=='|') {
+            next();
+            if(getCh()=='|'){
+                break;
+            }
             asts.add(catTree());
+        }
+        while (!isEnd() && getCh()=='|') {
+            next();
         }
         if (asts.size() == 1) {
             return left;
@@ -184,12 +197,6 @@ class RegexToASTree {
 
     private Ast multiTree() {
         Ast single = single();
-        if (single instanceof TerminalAst) {
-            TerminalAst t = ((TerminalAst) single);
-            if (t.isRecursiveType()) {
-               t.recursiveNo = recursiveCount++;
-            }
-        }
         for (; ; ) {
             if (isEnd()) {
                 return single;
