@@ -181,9 +181,10 @@ public class TestCase {
              *
             */
             "^[^'<>?%!\\s]{1,20}$",
-
-
-
+            /**
+             * 密码匹配
+            */
+            "(?=^.{12,25}$)(?=(?:.*?\\d){2})(?=.*[a-z])(?=(?:.*?[A-Z]){2})(?=(?:.*?[!@#$%*()_+^&}{:;?.]){2})(?!.*\\s)[0-9a-zA-Z!@#$%*()_+^&]*$",
 
 
     };
@@ -234,7 +235,8 @@ public class TestCase {
                 new String[]{"12.152.80.in-addr.arpa","*.domain.de","test.de"},
                 new String[]{"123.23"},
                 new String[]{"c:\\arquivo.htm","\\\\home\\arquivo232.HTML","Z:\\teste.htm"},
-                new String[]{"abcd123","-+abc"}
+                new String[]{"abcd123","-+abc"},
+                new String[]{"pAsSword@#123","PassW0rd@1*3"}
 
         };
 

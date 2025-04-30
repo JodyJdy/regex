@@ -271,13 +271,18 @@ public class ASTMatcher {
         if (tree == null) {
             return false;
         }
+        boolean strIsEnd = strIsEnd(i, end);
+        //这里要先检查 treeIsEnd
+        if (treeIsEnd(tree) && strIsEnd) {
+            return true;
+        }
         tree = groupStartCheck(tree, i, str);
         //只有 预查失败时，才会返回null
         if (tree == null) {
             return false;
         }
-        //这里要先检查 treeIsEnd
-        if (treeIsEnd(tree) && (strIsEnd(i, end))) {
+        //再次检查 treeIsEnd
+        if (treeIsEnd(tree) && strIsEnd) {
             return true;
         }
         if (tree instanceof TerminalAst) {
