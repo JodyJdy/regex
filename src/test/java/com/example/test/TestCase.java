@@ -223,7 +223,8 @@ public class TestCase {
                 new String[]{ "2345:0425:2CA1:0000:0000:0567:5673:23b5"},
                 new String[]{"abc@qq.com"},
                 new String[]{"12MAR02","12MAR2008","29FEB2008"},
-                new String[]{"12.152.80.in-addr.arpa","*.domain.de","test.de"}
+                new String[]{"12.152.80.in-addr.arpa","*.domain.de","test.de"},
+                new String[]{"123.23"}
 
         };
 
