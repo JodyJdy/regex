@@ -107,7 +107,7 @@ class TerminalAst extends Ast implements Cloneable {
     /**
      * 返回匹配到的数量
      */
-    int match(String str, int i, int end,int modifier,boolean matchMode) {
+    int match(String str, int i, int end,int modifier,boolean matchMode,boolean hasModifier) {
         //边界符号，匹配成功返回0，因为边界符号不占空间
         if (Terminal.isB(type) || Terminal.isb(type)) {
             int result = isWordBorder(str, i);
@@ -126,7 +126,7 @@ class TerminalAst extends Ast implements Cloneable {
                 return 0;
             }
             //查找模式下，开启了多行， \r \n 匹配 ^
-            if (!matchMode && i > 0 && Modifier.openMultiline(modifier)) {
+            if (hasModifier && !matchMode && i > 0 && Modifier.openMultiline(modifier)) {
                 if(str.charAt(i-1)=='\n'||(!Modifier.openUnixLine(modifier)&& str.charAt(i-1)=='\r')){
                     return 0;
                 }
@@ -139,7 +139,7 @@ class TerminalAst extends Ast implements Cloneable {
                 return 0;
             }
             //查找模式下，开启了多行， \r \n 匹配 ^
-            if (!matchMode && Modifier.openMultiline(modifier)) {
+            if (hasModifier && !matchMode && Modifier.openMultiline(modifier)) {
                 if(str.charAt(i)=='\n'||(!Modifier.openUnixLine(modifier)&& str.charAt(i)=='\r')){
                     return 0;
                 }
@@ -153,7 +153,7 @@ class TerminalAst extends Ast implements Cloneable {
         }
         char chi = str.charAt(i);
         //大小写不敏感
-        boolean caseInsensitive = Modifier.openCaseInsensitive(modifier);
+        boolean caseInsensitive = hasModifier && Modifier.openCaseInsensitive(modifier);
         // 普通的字符比较
         if (Terminal.isSimple(type)) {
             //单个字符比较

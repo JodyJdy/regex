@@ -176,7 +176,7 @@ class Terminal {
         }
         if(isDotType(type)){
             // 默认 . 是不匹配换行的
-            if (Modifier.openDotAll(modifier)) {
+            if (modifier != 0 && Modifier.openDotAll(modifier)) {
                 result = true;
             } else {
                 result = ch != '\r' && ch != '\n';

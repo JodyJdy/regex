@@ -298,7 +298,7 @@ public class ASTMatcher {
                 return false;//searchRecursive(terminalAst, i, end);
             } else {
                 //普通字符的匹配
-                count = terminalAst.match(str, i, end,modifier,matchMode);
+                count = terminalAst.match(str, i, end,modifier,matchMode,hasModifier);
             }
             // 匹配失败
             if (count < 0) {
