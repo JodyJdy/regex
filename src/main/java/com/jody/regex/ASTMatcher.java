@@ -371,11 +371,15 @@ public class ASTMatcher {
             //match模式或者 find模式的非贪心查找，此时优先处理next节点
         } else {
             boolean search = searchTree(getNextAndGroupEndCheck(numAst, i), i, end);
-            numAstMaxI[numAst.numAstNo] = Util.NONE;
             if (search) {
                 return true;
             }
-            return searchTree(numAst.ast, i, end);
+            NumAstStatus status = new NumAstStatus(numAst);
+            boolean r =  searchTree(numAst.ast, i, end);
+            if (!r) {
+                status.resumeStatus();
+            }
+            return r;
         }
     }
 
@@ -436,7 +440,10 @@ public class ASTMatcher {
             numAstCircleNum[numAstNo]++;
             boolean b = searchTree(rangeAst.ast, i, end);
             if (!b) {
-                numAstCircleNum[numAstNo] = 0;
+                numAstCircleNum[rangeAst.numAstNo] = curCircle;
+            } else{
+                numAstCircleNum[rangeAst.numAstNo] = 0;
+                numAstMaxI[rangeAst.numAstNo] = Util.NONE;
             }
             return b;
         }
@@ -481,11 +488,15 @@ public class ASTMatcher {
      * {num}
      */
     private boolean searchFixedAst(NumAst unfixed, int i, int end) {
-        if (numAstCircleNum[unfixed.numAstNo] != unfixed.num) {
-            numAstCircleNum[unfixed.numAstNo]++;
+        int curCircleNum =numAstCircleNum[unfixed.numAstNo];
+        if (curCircleNum < unfixed.num) {
+            numAstCircleNum[unfixed.numAstNo] = curCircleNum+1;
             boolean result =searchTree(unfixed.ast, i, end);
             if (!result) {
-               numAstCircleNum[unfixed.numAstNo] = 0;
+                numAstCircleNum[unfixed.numAstNo] = curCircleNum;
+            } else{
+                numAstCircleNum[unfixed.numAstNo] = 0;
+                numAstMaxI[unfixed.numAstNo] = Util.NONE;
             }
             return result;
         }
@@ -493,7 +504,6 @@ public class ASTMatcher {
             return false;
         }
         //还原
-        numAstCircleNum[unfixed.numAstNo] = 0;
         return searchTree(getNextAndGroupEndCheck(unfixed, i), i, end);
     }
 
