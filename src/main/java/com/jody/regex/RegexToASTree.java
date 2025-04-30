@@ -321,13 +321,7 @@ class RegexToASTree {
             Set<Character> chs = new HashSet<>();
             List<TerminalAst.CharRange> ranges = new ArrayList<>();
             while (getCh() != ']') {
-                if (getNext() == '-' && getNext(2) != ']') {
-                    char start = getCh();
-                    next(2);
-                    char end = getCh();
-                    next();
-                    ranges.add(new TerminalAst.CharRange(start, end));
-                } else if (getCh() == '\\') {
+                if (getCh() == '\\') {
                     next();
                     ch = getCh();
                     int tempType = getTerminalType(ch);
@@ -337,6 +331,13 @@ class RegexToASTree {
                         chs.add(ch);
                     }
                     next();
+                }
+                else if (getNext() == '-' && getNext(2) != ']') {
+                    char start = getCh();
+                    next(2);
+                    char end = getCh();
+                    next();
+                    ranges.add(new TerminalAst.CharRange(start, end));
                 } else {
                     chs.add(getCh());
                     next();
