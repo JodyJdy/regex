@@ -173,6 +173,14 @@ public class TestCase {
              * number
             */
             "^\\s*[+-]?\\s*(?:\\d{1,3}(?:(,?)\\d{3})?(?:\\1\\d{3})*(\\.\\d*)?|\\.\\d+)\\s*$",
+            /**
+             * html file
+            */
+            "^(([a-zA-Z]:)|(\\\\{2}\\w+)\\$?)(\\\\(\\w[\\w ]*.*))+\\.((html|HTML)|(htm|HTM))$",
+            /**
+             *
+            */
+            "^[^'<>?%!\\s]{1,20}$",
 
 
 
@@ -224,7 +232,9 @@ public class TestCase {
                 new String[]{"abc@qq.com"},
                 new String[]{"12MAR02","12MAR2008","29FEB2008"},
                 new String[]{"12.152.80.in-addr.arpa","*.domain.de","test.de"},
-                new String[]{"123.23"}
+                new String[]{"123.23"},
+                new String[]{"c:\\arquivo.htm","\\\\home\\arquivo232.HTML","Z:\\teste.htm"},
+                new String[]{"abcd123","-+abc"}
 
         };
 
