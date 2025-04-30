@@ -379,6 +379,7 @@ public class ASTMatcher {
             if (!r) {
                 status.resumeStatus();
             }
+            numAstMaxI[numAst.numAstNo] = Util.NONE;
             return r;
         }
     }
@@ -443,8 +444,8 @@ public class ASTMatcher {
                 numAstCircleNum[rangeAst.numAstNo] = curCircle;
             } else{
                 numAstCircleNum[rangeAst.numAstNo] = 0;
-                numAstMaxI[rangeAst.numAstNo] = Util.NONE;
             }
+            numAstMaxI[rangeAst.numAstNo] = Util.NONE;
             return b;
         }
         if (shouldReturn(rangeAst, i)) {
