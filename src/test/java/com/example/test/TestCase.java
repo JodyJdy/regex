@@ -185,7 +185,50 @@ public class TestCase {
              * 密码匹配
             */
             "(?=^.{12,25}$)(?=(?:.*?\\d){2})(?=.*[a-z])(?=(?:.*?[A-Z]){2})(?=(?:.*?[!@#$%*()_+^&}{:;?.]){2})(?!.*\\s)[0-9a-zA-Z!@#$%*()_+^&]*$",
+            /**
+             * not allowed spacce
+            */
+            "(?=^.{1,}$)(?!.*\\s)[0-9a-zA-Z!@#$%*()_+^&\\[\\]]*$",
+            /**
+             * 文件路径
+            */
+            "^(?:[\\w]\\:|\\\\)(\\\\[a-z_\\-\\s0-9\\.]+)+\\.(txt|gif|pdf|doc|docx|xls|xlsx)$",
+            /**
+             * 至少一个 letter or number
+            */
+            "^(?=.*[0-9]+.*)(?=.*[a-zA-Z]+.*)[0-9a-zA-Z]{6,}$",
+            /**
+             * script
+            */
+            "<script(?:(?:.*(?<src>(?<=src=\")[^\"]*(?=\"))[^>]*)|[^>]*)>(?<content>(?:(?:\\n|.)(?!(?:\\n|.)<script))*)</script>",
+            /**
+             * phone number
+            */
+            "([+]?\\d[ ]?[(]?\\d{3}[)]?[ ]?\\d{2,3}[- ]?\\d{2}[- ]?\\d{2})",
+            /**
+             * swedish phone number
+            */
+            "^[0-9]{6}-[0-9pPtTfF][0-9]{3}$",
 
+            /**
+             *UK Postal Codes
+            */
+            "^[A-Za-z]{1,2}[\\d]{1,2}([A-Za-z])?\\s?[\\d][A-Za-z]{2}$",
+            /**
+             *Linux Uptime Command
+            */
+            "^([0-2][0-9]\\:[0-5][0-9]\\:[0-5][0-9])\\s+up\\s+([0-9\\:]{1,5})\\s*(days|day|min|mins)?(?:\\,\\s+([0-9\\:]{1,5})\\s*(days|day|min|mins)?)?\\,\\s+([0-9]{1,4})\\susers?\\,\\s+load\\s+average\\:\\s+([0-9\\.]{1,6})\\,\\s+([0-9\\.]{1,6})\\,\\s+([0-9\\.]{1,6})$",
+            /**
+             * uri
+            */
+            "^(?=[^&])(?:(?<scheme>[^:/?#]+):)?(?://(?<authority>[^/?#]*))?(?<path>[^?#]*)(?:\\?(?<query>[^#]*))?(?:#(?<fragment>.*))?",
+            /**
+             * uri
+            */
+            "\\b(([\\w-]+://?|www[.])[^\\s()<>]+(?:\\([\\w\\d]+\\)|([^! \"#$%&'()*+,\\-./:;<=>?@\\[\\]^_{|}~`\\s]|/)))",
+            /**
+             *Indian number
+            */"^((\\+){0,1}91(\\s){0,1}(\\-){0,1}(\\s){0,1}){0,1}9[0-9](\\s){0,1}(\\-){0,1}(\\s){0,1}[1-9]{1}[0-9]{7}$",
 
     };
         /**
@@ -236,7 +279,21 @@ public class TestCase {
                 new String[]{"123.23"},
                 new String[]{"c:\\arquivo.htm","\\\\home\\arquivo232.HTML","Z:\\teste.htm"},
                 new String[]{"abcd123","-+abc"},
-                new String[]{"pAsSword@#123","PassW0rd@1*3"}
+                new String[]{"pAsSword@#123","PassW0rd@1*3"},
+                new String[]{"abc*()A123","12xyz[_]"},
+                new String[]{"\\\\192.168.0.1\\folder\\file.pdf","\\\\192.168.0.1\\my folder\\folder.2\\file.gif","c:\\my folder\\abc abc.docx"},
+                new String[]{"a1b2c3","abcdefg123","12345a"},
+                new String[]{"<script type=\"text/javascript\" src=\"Test.js\"></script>"},
+                new String[]{"+7 (960) 000 00 00","+7(4855)23-34-56","88002345675"},
+                new String[]{"123456-f234","123456-P234","123456-1234"},
+                new String[]{"CF1 2AA","cf564fg"},
+                new String[]{"13:21:33 up 219 days, 1:11, 1 user, load average: 0.00, 0.00, 0.00","21:17:21 up 19 days, 9:34, 1 user, load average: 0.00, 0.00, 0.00","1:17:21 up 19 days, 9:34, 1 user, load average: 12.30, 5.02, 1.20"},
+                new String[]{"http://regexlib.com/REDetails.aspx?regexp_id=x#Details"},
+                new String[]{"http://foo.com/blah_blah","http://foo.com/blah_blah/","http://www.example.com/wpstyle/?p=364"},
+                new String[]{"+919836193498","9836193498"}
+
+
+
 
         };
 

@@ -23,6 +23,7 @@
 * \w \W
 * \num  分组引用
 * \r \t \f \v \n 
+* (?i) (?m) (?d) (?n) (?s)
 
 暴漏出的使用的类为ASTPattern,ASTMatcher，使用方式为：
 ## 1.编译正则表达式
@@ -58,3 +59,14 @@ String g = matcher.group(0);
 String g1 = matcher.group("group");
 
 ```
+
+## todo
+[:alnum:]：匹配任何字母或数字，等价于 [A-Za-z0-9]。
+[:alpha:]：匹配任何字母，等价于 [A-Za-z]。
+[:digit:]：匹配任何数字，等价于 [0-9]。
+[:lower:]：匹配任何小写字母，等价于 [a-z]。
+[:upper:]：匹配任何大写字母，等价于 [A-Z]。
+[:punct:]：匹配任何标点符号。
+[:space:]：匹配任何空白字符，包括空格、制表符、换行符等。
+[:xdigit:]：匹配任何十六进制数字，等价于 [0-9A-Fa-f]。
+\p{}
