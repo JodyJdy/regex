@@ -409,7 +409,11 @@ public class ASTMatcher {
         int curCircleNum = numAstCircleNum[numAstNo];
         if (curCircleNum < 1) {
             numAstCircleNum[numAstNo]++;
-            return searchTree(numAst.ast, i, end);
+            boolean rel = searchTree(numAst.ast, i, end);
+            if (!rel) {
+               numAstCircleNum[numAstNo] = 0;
+            }
+            return rel;
         }
         if (shouldReturn(numAst, i)) {
             return false;
