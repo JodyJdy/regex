@@ -98,9 +98,6 @@ class RegexToASTree {
             ast.nextLeaveGroupNum = ast.globalGroupNum;
             ast.nextLeaveGroupType = ast.groupType;
         }
-        if (ast instanceof TerminalAst) {
-            return;
-        }
         if (ast instanceof OrAst) {
             OrAst orAst = (OrAst) ast;
             for (Ast node : orAst.asts) {

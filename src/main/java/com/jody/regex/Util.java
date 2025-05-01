@@ -102,9 +102,6 @@ class Util {
             setNode(ast,((NumAst) ast).ast);
             return;
         }
-        if (ast instanceof EndAst || ast instanceof TerminalAst || ast instanceof  ModifierAst) {
-            return;
-        }
         if (ast instanceof CatAst) {
             for (Ast a : ((CatAst) ast).asts) {
                 setNodeMinMaxNumAstNo(a);
