@@ -307,6 +307,10 @@ public class ASTMatcher {
             // 匹配成功，继续搜索
             return searchTree(getNextAndGroupEndCheck(terminalAst, i + count), i + count, end);
         }
+        //直接跳转到下个节点
+        if (tree instanceof EmptyAst) {
+            return searchTree(getNextAndGroupEndCheck(tree, i), i, end);
+        }
         if (tree instanceof ModifierAst) {
             modifier = modifier | tree.openFlag;
             modifier = modifier & tree.closeFlag;

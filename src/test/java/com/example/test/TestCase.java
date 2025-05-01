@@ -229,6 +229,10 @@ public class TestCase {
             /**
              *Indian number
             */"^((\\+){0,1}91(\\s){0,1}(\\-){0,1}(\\s){0,1}){0,1}9[0-9](\\s){0,1}(\\-){0,1}(\\s){0,1}[1-9]{1}[0-9]{7}$",
+            /**
+             *ISO8601 Date Parser v2
+            */
+            "^(\\d{4})(?:-([0]\\d|[1][0-2]))(?:-([0-2]\\d|[3][01]))(?:T([01]\\d|2[0-3]))(?::([0-5]\\d))(?::([0-5]\\d)(?:\\.(\\d{1,7}?)|)|)(Z|([+-])([01]\\d|2[0-3])(?::([0-5]\\d)))$",
 
     };
         /**
@@ -290,7 +294,8 @@ public class TestCase {
                 new String[]{"13:21:33 up 219 days, 1:11, 1 user, load average: 0.00, 0.00, 0.00","21:17:21 up 19 days, 9:34, 1 user, load average: 0.00, 0.00, 0.00","1:17:21 up 19 days, 9:34, 1 user, load average: 12.30, 5.02, 1.20"},
                 new String[]{"http://regexlib.com/REDetails.aspx?regexp_id=x#Details"},
                 new String[]{"http://foo.com/blah_blah","http://foo.com/blah_blah/","http://www.example.com/wpstyle/?p=364"},
-                new String[]{"+919836193498","9836193498"}
+                new String[]{"+919836193498","9836193498"},
+                new String[]{"2013-12-01T04:33Z","2013-12-01T04:33:12.234Z","2013-12-01T23:12-07:00"}
 
 
 

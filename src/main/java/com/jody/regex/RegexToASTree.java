@@ -152,9 +152,6 @@ class RegexToASTree {
 
     private Ast orTree() {
         //跳过空分支 |
-        while (!isEnd() && getCh() == '|') {
-            next();
-        }
         List<Ast> asts = new ArrayList<>();
         if (isEnd()) {
             return new OrAst(asts);
@@ -163,13 +160,15 @@ class RegexToASTree {
         asts.add(left);
         while (!isEnd() && getCh()=='|') {
             next();
-            if(getCh()=='|'){
+            //遇到分组的结束了
+            if(!isEnd() && getCh() == ')'){
+                asts.add(new EmptyAst());
+                break;
+            }
+            if (isEnd()) {
                 break;
             }
             asts.add(catTree());
-        }
-        while (!isEnd() && getCh()=='|') {
-            next();
         }
         if (asts.size() == 1) {
             return left;
@@ -178,6 +177,10 @@ class RegexToASTree {
     }
 
     private Ast catTree() {
+        //  遇到了 ||的形式
+        if(getCh() == '|'){
+           return new EmptyAst();
+        }
         Ast mul = multiTree();
         List<Ast> asts = new ArrayList<>();
         asts.add(mul);
