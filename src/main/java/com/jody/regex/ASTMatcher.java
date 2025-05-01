@@ -409,6 +409,7 @@ public class ASTMatcher {
         int curCircleNum = numAstCircleNum[numAstNo];
         if (curCircleNum < 1) {
             numAstCircleNum[numAstNo]++;
+            clearNumAstStatus(numAst.ast);
             boolean rel = searchTree(numAst.ast, i, end);
             if (!rel) {
                numAstCircleNum[numAstNo] = 0;
@@ -448,6 +449,7 @@ public class ASTMatcher {
         int curCircle = numAstCircleNum[numAstNo];
         if (curCircle < rangeAst.start) {
             numAstCircleNum[numAstNo]++;
+            clearNumAstStatus(rangeAst.ast);
             boolean b = searchTree(rangeAst.ast, i, end);
             if (!b) {
                 numAstCircleNum[rangeAst.numAstNo] = curCircle;
@@ -501,7 +503,10 @@ public class ASTMatcher {
         int curCircleNum =numAstCircleNum[unfixed.numAstNo];
         if (curCircleNum < unfixed.num) {
             numAstCircleNum[unfixed.numAstNo] = curCircleNum+1;
+            //清除内部的状态
+            clearNumAstStatus(unfixed.ast);
             boolean result =searchTree(unfixed.ast, i, end);
+            //还原
             if (!result) {
                 numAstCircleNum[unfixed.numAstNo] = curCircleNum;
             } else{
