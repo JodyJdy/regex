@@ -326,9 +326,16 @@ class RegexToASTree {
             //[]里面也可以放 \d,\w这种,
             int type = Terminal.COMPOSITE;
             Set<Character> chs = new HashSet<>();
+            int level = 1;
             List<TerminalAst.CharRange> ranges = new ArrayList<>();
-            while (getCh() != ']') {
-                if (getCh() == '\\') {
+            while (level != 0 && !isEnd()) {
+                if(getCh() =='['){
+                    next();
+                    level++;
+                } else if(getCh() == ']'){
+                    next();
+                    level--;
+                }else if (getCh() == '\\') {
                     next();
                     ch = getCh();
                     int tempType = getTerminalType(ch);
@@ -350,7 +357,6 @@ class RegexToASTree {
                     next();
                 }
             }
-            next();
             return new TerminalAst(isNegative, chs, ranges, type);
         }
         // 遇到分组
