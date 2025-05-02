@@ -1,6 +1,7 @@
 package com.jody.regex;
 
 
+
 import java.util.*;
 
 /**
@@ -81,10 +82,6 @@ class RegexToASTree {
         i++;
     }
 
-    /**
-     * todo
-     * 处理 \\x转移
-     */
     private char getCh() {
         return regex.charAt(i);
     }
@@ -254,6 +251,16 @@ class RegexToASTree {
         }
     }
 
+    private boolean isLineSeparator(int ch) {
+        if (Modifier.openUnixLine(modifier)) {
+            return ch == '\n';
+        } else {
+            return (ch == '\n' ||
+                    ch == '\r' ||
+                    (ch|1) == '\u2029' ||
+                    ch == '\u0085');
+        }
+    }
     /**
      *读取 \ 之后的特殊的 TerminalAst
      *
@@ -261,6 +268,28 @@ class RegexToASTree {
      */
     private TerminatorMsg readTerminator(){
         char ch = getCh();
+        // ?x 需要跳过空白符号
+        if (Modifier.openComment(modifier) && (ch == '#' || ASCII.isSpace((ch)))) {
+            if (ASCII.isSpace(ch)) {
+                while (!isEnd() && ASCII.isSpace(getCh())) {
+                    next();
+                }
+            }
+            if (isEnd()) {
+                return null;
+            }
+            //不断获取下一个知道换行符号
+            if (getCh() == '#') {
+                while (!isEnd() && !isLineSeparator(getCh())) {
+                    next();
+                }
+            }
+            if (isEnd()) {
+                return null;
+            }
+        }
+
+
         int type = Terminal.SIMPLE;
         CharPredicates.CharPredicate predicate = null;
         Character character = null;
