@@ -280,6 +280,7 @@ class RegexToASTree {
             type = Terminal.GROUP_CAPTURE | groupCount;
         } else {
             switch (ch) {
+                case 'c': next(); character = (char) (getCh() ^ 64);next();break;
                 case 'n': character = '\n';next();break;
                 case 'r': character = '\r';next();break;
                 case 'f': character = '\f';next();break;

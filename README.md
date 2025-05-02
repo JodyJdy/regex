@@ -25,6 +25,7 @@
 * \r \t \f \v \n 
 * (?i) (?m) (?d) (?n) (?s)
 * \p{}
+* \c
 
 暴漏出的使用的类为ASTPattern,ASTMatcher，使用方式为：
 ## 1.编译正则表达式
