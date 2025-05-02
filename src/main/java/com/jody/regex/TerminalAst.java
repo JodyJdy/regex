@@ -14,7 +14,6 @@ class TerminalAst extends Ast implements Cloneable {
      */
     String cs;
     /**
-     * \p{}和[:puc:]格式时
      */
     CharPredicates.CharPredicate predicate;
 

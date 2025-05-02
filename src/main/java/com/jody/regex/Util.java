@@ -62,7 +62,7 @@ class Util {
         int i = 0;
         while(i < n){
             //合并 ast(i)和 ast(i+1)
-            // 连续的字符一定有 相同的
+            // 连续的字符一定有 相同的模式修正符
             if(couldMergeTerminal(astList.get(i))){
                 TerminalAst ast = ((TerminalAst) astList.get(i));
                 int j = i + 1;
