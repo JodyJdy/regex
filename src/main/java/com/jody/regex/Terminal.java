@@ -67,11 +67,23 @@ class Terminal {
     /**
      * 匹配开始符号
      */
-    final static int START = 1 << 12;
+    final static int START_OF_LINE = 1 << 12;
     /**
      * 匹配结束符号
      */
-    final static int END = 1 << 13;
+    final static int END_OF_LINE = 1 << 13;
+
+    /**
+     * \\A
+     */
+    final static int INPUT_START = 1 << 14;
+
+    /**
+     * \z
+     */
+    final static int INPUT_END = 1<<15;
+
+    final static int INTPUT_END_WITH_TERMINATOR = 1 << 16;
 
     /**
      * 组合类型
@@ -100,11 +112,22 @@ class Terminal {
     static boolean isB(int type){
         return (type &B) != 0;
     }
-    public static boolean isStart(int type) {
-        return type == START;
+    public static boolean isStartOfLine(int type) {
+        return type == START_OF_LINE;
     }
-    public static boolean isEnd(int type) {
-        return type == END;
+    public static boolean isEndOfLine(int type) {
+        return type == END_OF_LINE;
+    }
+
+    public static boolean isStartOfInput(int type) {
+        return type == INPUT_START;
+    }
+    public static boolean isEndOfInput(int type) {
+        return type == INPUT_END;
+    }
+
+    public static boolean isEndOfInputWithTerminator(int type) {
+        return type == INTPUT_END_WITH_TERMINATOR;
     }
 
 }

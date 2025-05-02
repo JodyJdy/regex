@@ -264,6 +264,7 @@ class RegexToASTree {
         int type = Terminal.SIMPLE;
         CharPredicates.CharPredicate predicate = null;
         Character character = null;
+        String chs = null;
         // 简单情形
         if (ch != '\\') {
             //移动下标
@@ -369,6 +370,9 @@ class RegexToASTree {
                     predicate = Modifier.openUnicodeCharacterClass(modifier) ?
                             CharPredicates.WORD() :CharPredicates.ASCII_WORD();
                     type =  Terminal.w;next();break;
+                case 'A': type = Terminal.INPUT_START;next();break;
+                case 'z': type = Terminal.INPUT_END;next();break;
+                case 'Z': type = Terminal.INTPUT_END_WITH_TERMINATOR;next();break;
                 case 'b':
                     type =  Terminal.b;next();break;
                 case 'B':
@@ -390,11 +394,11 @@ class RegexToASTree {
                     }
                     String name = regex.substring(start, i);
                     checkAndNext('}');
-                    int i = name.indexOf('=');
-                    if (i != -1) {
+                    int loc = name.indexOf('=');
+                    if (loc != -1) {
                         // property construct \p{name=value}
-                        String value = name.substring(i + 1);
-                        name = name.substring(0, i).toLowerCase(Locale.ENGLISH);
+                        String value = name.substring(loc + 1);
+                        name = name.substring(0, loc).toLowerCase(Locale.ENGLISH);
                         switch (name) {
                             case "sc":
                             case "script":
@@ -436,13 +440,34 @@ class RegexToASTree {
                             throw new RuntimeException("错误的 unicode category 类型");
                     }
                     type =  Terminal.P;break;
+                // \Q
+                case 'E':
+                    throw new RuntimeException("缺少\\Q");
+                case 'Q':
+                    next();
+                    StringBuilder sb = new StringBuilder();
+                    while (!isEnd()) {
+                        //遇到结尾
+                       if(getCh() =='\\' && i+1<regex.length() && getNext() =='E'){
+                           next(2);
+                           break;
+                        } else{
+                           sb.append(getCh());
+                           next();
+                       }
+                    }
+                    chs = sb.toString();
+                    if (chs.isEmpty()) {
+                        return null;
+                    }
+                    break;
                 default:
                     character = getCh();
                     next();
                     break;
             }
         }
-        return new TerminatorMsg(type,predicate,character);
+        return new TerminatorMsg(type,predicate,character,chs);
     }
 
 
@@ -450,13 +475,16 @@ class RegexToASTree {
         TerminalAst ast;
         //readTerminator会自动执行next()
         TerminatorMsg terminatorMsg = readTerminator();
+        if (terminatorMsg == null) {
+            return new EmptyAst();
+        }
         Character ch = terminatorMsg.ch;
         // 当没有转义符号时
         if (terminatorMsg.type == Terminal.SIMPLE && !terminatorMsg.hasTrans) {
             if(ch == '^') {
-                ast =  new TerminalAst(Terminal.START);
+                ast =  new TerminalAst(Terminal.START_OF_LINE);
             } else if (ch == '$') {
-                ast = new TerminalAst(Terminal.END);
+                ast = new TerminalAst(Terminal.END_OF_LINE);
             } else if (ch == '.') {
                 CharPredicates.CharPredicate charPredicate;
                 if (Modifier.openDotAll(modifier)) {
@@ -480,7 +508,12 @@ class RegexToASTree {
                 ast = new TerminalAst(ch,Terminal.SIMPLE);
             }
         }else if(Terminal.SIMPLE == terminatorMsg.type){
-            ast = new TerminalAst(ch,Terminal.SIMPLE);
+            //读取到多个字符
+            if (terminatorMsg.chs != null) {
+                ast = new TerminalAst(terminatorMsg.chs,Terminal.SIMPLE);
+            } else{
+                ast = new TerminalAst(ch,Terminal.SIMPLE);
+            }
         }else {
             //复杂类型 \\d, \\s
             ast = new TerminalAst(terminatorMsg.type);
@@ -532,7 +565,7 @@ class RegexToASTree {
                         result = result.union(range);
                     } else{
                        //将字符放入chs集合中
-                       singleCharCaseInsensitive(curTerminatorMsg.ch,chs);
+                        addCharCaseInsensitive(curTerminatorMsg,chs);
                     }
                 } else {
                     //复杂类型
@@ -549,7 +582,16 @@ class RegexToASTree {
     }
 
 
-    private void singleCharCaseInsensitive(char ch, Set<Character> chs) {
+    private void addCharCaseInsensitive(TerminatorMsg terminatorMsg, Set<Character> chs) {
+        if (terminatorMsg.ch != null) {
+            addCharCaseInsensitive(terminatorMsg.ch, chs);
+        } else if (terminatorMsg.chs != null) {
+            for (int i = 0; i < terminatorMsg.chs.length(); i++) {
+                addCharCaseInsensitive(terminatorMsg.chs.charAt(i), chs);
+            }
+        }
+    }
+    private void addCharCaseInsensitive(char ch, Set<Character> chs) {
         chs.add(ch);
         if (Modifier.openCaseInsensitive(modifier)) {
             if (Modifier.openUnicodeCharacterClass(modifier)) {
@@ -709,6 +751,11 @@ class RegexToASTree {
 
        Character ch;
 
+        /**
+         * 当出现 \Q \E时会有
+         */
+        String chs;
+
        boolean hasTrans = false;
 
         public TerminatorMsg(int type) {
@@ -723,13 +770,15 @@ class RegexToASTree {
             this.type = type;
             this.ch = ch;
             this.hasTrans = hasTrans;
+            this.chs = chs;
         }
 
-        public TerminatorMsg(int type, CharPredicates.CharPredicate charPredicate,Character character) {
+        public TerminatorMsg(int type, CharPredicates.CharPredicate charPredicate,Character character,String chs) {
             this.type = type;
             this.charPredicate = charPredicate;
             this.ch = character;
             hasTrans = true;
+            this.chs = chs;
         }
     }
 

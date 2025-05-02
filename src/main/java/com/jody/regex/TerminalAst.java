@@ -1,7 +1,6 @@
 package com.jody.regex;
 
 import java.util.List;
-import java.util.Set;
 
 class TerminalAst extends Ast implements Cloneable {
     /**
@@ -97,7 +96,7 @@ class TerminalAst extends Ast implements Cloneable {
         }
         // 目前仅以str字符串开始和结尾来判断 ^ $
         // 开始符号
-        if (Terminal.isStart(type)) {
+        if (Terminal.isStartOfLine(type)) {
             if (i == 0) {
                 return 0;
             }
@@ -110,7 +109,7 @@ class TerminalAst extends Ast implements Cloneable {
             return Util.NONE;
         }
         //结束符号
-        if (Terminal.isEnd(type)) {
+        if (Terminal.isEndOfLine(type)) {
             if (i >= str.length()) {
                 return 0;
             }
@@ -121,6 +120,27 @@ class TerminalAst extends Ast implements Cloneable {
                 }
             }
             return -1;
+        }
+        // \A
+        if (Terminal.isStartOfInput(type)) {
+            if (i == 0) {
+                return 0;
+            }
+        }
+        // \z
+        if (Terminal.isEndOfInput(type)) {
+            if (i >= str.length()) {
+               return 0;
+            }
+        }
+        // \Z
+        if (Terminal.isEndOfInputWithTerminator(type)) {
+            if (i >= str.length()) {
+                return 0;
+            }
+            if (i == str.length() - 1 && (str.charAt(i) == '\n' || str.charAt(i) == '\r')) {
+               return 1;
+            }
         }
 
         //下面的都是占字符的终结符类型，一定要能取到字符，此时需要i进行判断
