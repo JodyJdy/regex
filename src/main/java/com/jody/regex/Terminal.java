@@ -77,13 +77,19 @@ class Terminal {
      * \\A
      */
     final static int INPUT_START = 1 << 14;
-
     /**
      * \z
      */
     final static int INPUT_END = 1<<15;
 
+    /**
+     * \Z
+     */
     final static int INTPUT_END_WITH_TERMINATOR = 1 << 16;
+    /**
+     * \R
+     */
+    final static int UNICODE_LINE_BREAK = 1 << 17;
 
     /**
      * 组合类型
@@ -128,6 +134,10 @@ class Terminal {
 
     public static boolean isEndOfInputWithTerminator(int type) {
         return type == INTPUT_END_WITH_TERMINATOR;
+    }
+
+    public static boolean isUniCodeLineBreak(int type) {
+        return type == UNICODE_LINE_BREAK;
     }
 
 }

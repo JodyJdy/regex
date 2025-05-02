@@ -461,6 +461,9 @@ class RegexToASTree {
                         return null;
                     }
                     break;
+                // unicode line break
+                case 'R': type = Terminal.UNICODE_LINE_BREAK;next();
+                    break;
                 default:
                     character = getCh();
                     next();

@@ -143,11 +143,36 @@ class TerminalAst extends Ast implements Cloneable {
             }
         }
 
+        // \R
+        if (Terminal.isUniCodeLineBreak(type)) {
+            if (i < end) {
+                char ch = str.charAt(i);
+                if (ch == 0x0A || ch == 0x0B || ch == 0x0C ||
+                        ch == 0x85 || ch == 0x2028 || ch == 0x2029){
+                    return 1;
+                }
+                if (ch == 0x0D) {
+                    //到达结尾
+                    if (i + 1 >= end || i + 1 >= str.length()) {
+                        return 1;
+                    } else{
+                        ch = str.charAt(i + 1);
+                        if (ch == 0x0A) {
+                            return 2;
+                        }
+                    }
+                    return Util.NONE;
+                }
+            }
+
+        }
         //下面的都是占字符的终结符类型，一定要能取到字符，此时需要i进行判断
         if (i >= end || i >= str.length()) {
             return Util.NONE;
         }
         char chi = str.charAt(i);
+
+
         //大小写不敏感
         boolean caseInsensitive = Modifier.openCaseInsensitive(modifier);
         // 普通的字符比较
