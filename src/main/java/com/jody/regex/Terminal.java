@@ -50,9 +50,9 @@ class Terminal {
     final static int GROUP_NUM_MAST = 0b1111111;
 
     /**
-     * 组表达式引用
+     * \\p{}
      */
-    final  static int EXPRESSION = 1 << 9;
+    final  static int P = 1 << 9;
     /**
      *匹配单词边界，不占字符位置，是字符之间的间隙
      * 左边占位的字符或右边占位的字符，至少有一个不是 \w
@@ -93,9 +93,6 @@ class Terminal {
     static int getReferenceGroupNum(int type){
         return type & GROUP_NUM_MAST;
     }
-    static boolean isExpression(int type){
-        return (type & EXPRESSION)!= 0;
-    }
 
     static boolean isb(int type){
         return (type & b) != 0;
@@ -103,62 +100,6 @@ class Terminal {
     static boolean isB(int type){
         return (type &B) != 0;
     }
-
-    private static boolean isNumberType(int type){
-        return  (type & NUMBER) != 0;
-    }
-    static boolean isNumber(char ch){
-        return ch>='0' && ch<='9';
-    }
-
-    private static boolean isNotNumberType(int type){
-        return  (type & NOT_NUMBER) != 0;
-    }
-    private static boolean isNotNumber(char ch){
-        return !isNumberType(ch);
-    }
-    private static boolean isDotType(int type){
-        return  (type & DOT) != 0;
-    }
-    private static boolean isWType(int type){
-        return  (type & W) != 0;
-    }
-    static boolean isW(char ch){
-        return !isw(ch);
-    }
-    private static boolean iswType(int type){
-        return  (type & w) != 0;
-    }
-
-    static boolean isw(char c) {
-        return isUnder(c) || isUpper(c) || isLower(c) || isNumber(c);
-    }
-
-    static boolean isUnder(char c) {
-        return c == '_';
-    }
-
-    static boolean isLower(char c) {
-        return c >= 'a' && c <= 'z';
-    }
-
-    static boolean isUpper(char c) {
-        return c >= 'A' && c <= 'Z';
-    }
-    private static boolean isS(char c){
-        return !iss(c);
-    }
-    private static boolean isSType(int type){
-        return  (type & S) != 0;
-    }
-
-    private static boolean iss(char c){
-        return c == '\n' || c == '\f' || c == '\r' || c == '\t' || c ==' ';
-    }
-    private static boolean issType(int type){
-        return  (type & s) != 0;
-    }
-
     public static boolean isStart(int type) {
         return type == START;
     }
@@ -166,34 +107,4 @@ class Terminal {
         return type == END;
     }
 
-    static boolean match(char ch,int type,int modifier){
-        boolean result = false;
-        if(isNumberType(type)){
-            result = isNumber(ch);
-        }
-        if(isNotNumberType(type)){
-            result = result || isNotNumber(ch);
-        }
-        if(isDotType(type)){
-            // 默认 . 是不匹配换行的
-            if (modifier != 0 && Modifier.openDotAll(modifier)) {
-                result = true;
-            } else {
-                result = ch != '\r' && ch != '\n';
-            }
-        }
-        if(isWType(type)){
-            result = result || isW(ch);
-        }
-        if(iswType(type)){
-            result = result || isw(ch);
-        }
-        if(isSType(type)){
-            result = result || isS(ch);
-        }
-        if(issType(type)){
-            result = result || iss(ch);
-        }
-        return result;
-    }
 }

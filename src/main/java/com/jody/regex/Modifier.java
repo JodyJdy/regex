@@ -54,6 +54,14 @@ public class Modifier {
      */
     static int CLOSE_DOTALL = ~DOTALL;
 
+    /**
+     * Enables the Unicode version of Predefined character classes and POSIX character classes.
+     * (?U)
+     */
+    static int UNICODE_CHARACTER_CLASS = 0B100000;
+
+    static int CLOSE_UNICODE_CHARACTER_CLASS = ~UNICODE_CHARACTER_CLASS;
+
 
     static boolean openUnixLine(int modifier) {
         return (modifier & UNIX_LINES) != 0;
@@ -73,5 +81,9 @@ public class Modifier {
 
     static boolean openDotAll(int modifier) {
         return (modifier & DOTALL) != 0;
+    }
+
+    static boolean openUnicodeCharacterClass(int modifier) {
+        return (modifier & UNICODE_CHARACTER_CLASS) != 0;
     }
 }

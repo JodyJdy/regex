@@ -19,20 +19,12 @@ class RegexToASTree {
      * 捕获组的编号
      */
     int catchGroupCount = 0;
-    /**
-     * 模式修正编号
-     */
-    int modifierGroupCount = 0;
 
     /**
      * 可计数节点的编号
      */
     int numAstCount = 0;
 
-    /**
-     * 递归节点的编号
-     */
-    int recursiveCount = 0;
 
     /**
      * 所有可以捕获的组
@@ -40,18 +32,25 @@ class RegexToASTree {
     List<Ast> catchGroups = new ArrayList<>();
 
     /**
-     * 是否有模式修正符
+     * 16进制数字长度
      */
-    boolean hasModifier = false;
+    private static final int HEX_LEN = 2;
+    /**
+     * unicode 长度
+     */
+    private static final int UNI_CODE_LEN = 4;
+
+
+    int modifier;
     /**
      * 存储所有的组
      */
     List<Ast> allGroups = new ArrayList<>();
 
 
-    RegexToASTree(String regex,boolean hasModifier) {
+    RegexToASTree(String regex,int modifier) {
         this.regex = regex;
-        this.hasModifier = hasModifier;
+        this.modifier = modifier;
     }
 
     public boolean isEnd() {
@@ -137,12 +136,14 @@ class RegexToASTree {
 
 
     Ast astTree() {
+        int curModifier = modifier;
         Ast ast = orTree();
         ast.setNext(Util.END_AST);
         tree2Linked(ast);
         //设置节点中可计数节点的编号范围
         Util.setNodeMinMaxNumAstNo(ast);
         sortGroups();
+        modifier = curModifier;
         return ast;
     }
     private  void sortGroups(){
@@ -219,14 +220,7 @@ class RegexToASTree {
                     break;
                 case '?':
                     next();
-                    Ast temp = single;
-                    //特殊情况，对于递归调用 \\g<0>? 代表非贪婪模式， \\g<0> 代表贪婪模式，不再创建一个 NumAst
-                    if(temp instanceof TerminalAst && ((TerminalAst) temp).isRecursiveType()){
-                        //设置非贪婪模式
-                        ((TerminalAst) temp).recursiveGreedy = false;
-                    } else{
-                        single = new NumAst(single, NumAst.MOST_1,numAstCount++);
-                    }
+                    single = new NumAst(single, NumAst.MOST_1, numAstCount++);
                     break;
                 case '{':
                     next();
@@ -260,118 +254,294 @@ class RegexToASTree {
         }
     }
 
-    private int getTerminalType(char ch) {
-        switch (ch) {
-            case 'd':
-                return Terminal.NUMBER;
-            case 'W':
-                return Terminal.W;
-            case 'S':
-                return Terminal.S;
-            case 's':
-                return Terminal.s;
-            case 'D':
-                return Terminal.NOT_NUMBER;
-            case 'w':
-                return Terminal.w;
-            case 'b':
-                return Terminal.b;
-            case 'B':
-                return Terminal.B;
-            //表达式引用形式是\g<0> \g<1>  \g<0>代表递归匹配
-            case 'g':
-                next(2);
-                return Terminal.EXPRESSION | getNum();
-            default:
-                return Terminal.SIMPLE;
+    /**
+     *读取 \ 之后的特殊的 TerminalAst
+     *
+     *读取后下标会 移动
+     */
+    private TerminatorMsg readTerminator(){
+        char ch = getCh();
+        int type = Terminal.SIMPLE;
+        CharPredicates.CharPredicate predicate = null;
+        Character character = null;
+        // 简单情形
+        if (ch != '\\') {
+            //移动下标
+            next();
+            return new TerminatorMsg(type, ch);
+        }
+        //跳过\符号
+        next();
+        ch = getCh();
+        //以转移符号 \\开头的内容
+        //引用组
+        if (ASCII.isDigit(ch)) {
+            int groupCount = getNum();
+            type = Terminal.GROUP_CAPTURE | groupCount;
+        } else {
+            switch (ch) {
+                case 'n': character = '\n';next();break;
+                case 'r': character = '\r';next();break;
+                case 'f': character = '\f';next();break;
+                case 't': character = '\t';next();break;
+                case 'x':
+                    if (i + 1 + HEX_LEN >= regex.length()) {
+                        throw new RuntimeException("错误的16进制序列");
+                    }
+                    character = (char) Integer.valueOf(regex.substring(i + 1 , i + 1 + HEX_LEN), 16).intValue();
+                    next(1 + HEX_LEN);
+                    break;
+                case 'u':
+                    if (i + 1 + UNI_CODE_LEN >= regex.length()) {
+                        throw new RuntimeException("错误的Unicode序列");
+                    }
+                    character = (char) Integer.valueOf(regex.substring(i + 1 , i + 1 + UNI_CODE_LEN), 16).intValue();
+                    next(1 + UNI_CODE_LEN);
+                    break;
+                case 'd':
+                    predicate = Modifier.openUnicodeCharacterClass(modifier)?
+                            CharPredicates.DIGIT() : CharPredicates.ASCII_DIGIT();
+                    type =  Terminal.NUMBER;next();break;
+                case 'W':
+                    predicate = Modifier.openUnicodeCharacterClass(modifier) ?
+                           CharPredicates.WORD() :CharPredicates.ASCII_WORD();
+                    predicate = predicate.negate();
+                    type =  Terminal.W;next();break;
+                case 'S':
+                    predicate = Modifier.openUnicodeCharacterClass(modifier) ?
+                            CharPredicates.WHITE_SPACE() : CharPredicates.ASCII_SPACE();
+                    predicate = predicate.negate();
+                    type =  Terminal.S;next();break;
+                case 's':
+                    predicate = Modifier.openUnicodeCharacterClass(modifier) ?
+                            CharPredicates.WHITE_SPACE() : CharPredicates.ASCII_SPACE();
+                    type =  Terminal.s;next();break;
+                case 'D':
+                    predicate = Modifier.openUnicodeCharacterClass(modifier)?
+                            CharPredicates.DIGIT() : CharPredicates.ASCII_DIGIT();
+                    predicate = predicate.negate();
+                    type =  Terminal.NOT_NUMBER;next();break;
+                case 'w':
+                    predicate = Modifier.openUnicodeCharacterClass(modifier) ?
+                            CharPredicates.WORD() :CharPredicates.ASCII_WORD();
+                    type =  Terminal.w;next();break;
+                case 'b':
+                    type =  Terminal.b;next();break;
+                case 'B':
+                    type =  Terminal.B;next();break;
+                case 'h':predicate = CharPredicates.HorizWS().negate();break;
+                case 'H':predicate = CharPredicates.HorizWS();break;
+                case 'v':predicate = CharPredicates.VertWS();break;
+                case 'V':predicate = CharPredicates.VertWS().negate();break;
+                //读取\p{}
+                case 'p':
+                    next();
+                    checkAndNext('{');
+                    int start = i;
+                    while (getCh() != '}'){
+                        next();
+                        if (isEnd()) {
+                            throw new RuntimeException("错误的 unicode category");
+                        }
+                    }
+                    String name = regex.substring(start, i);
+                    checkAndNext('}');
+                    int i = name.indexOf('=');
+                    if (i != -1) {
+                        // property construct \p{name=value}
+                        String value = name.substring(i + 1);
+                        name = name.substring(0, i).toLowerCase(Locale.ENGLISH);
+                        switch (name) {
+                            case "sc":
+                            case "script":
+                                predicate = CharPredicates.forUnicodeScript(value);
+                                break;
+                            case "blk":
+                            case "block":
+                                predicate = CharPredicates.forUnicodeBlock(value);
+                                break;
+                            case "gc":
+                            case "general_category":
+                                predicate = CharPredicates.forProperty(value, Modifier.openCaseInsensitive(modifier));
+                                break;
+                            default:
+                                break;
+                        }
+                        if (predicate == null){
+                            throw new RuntimeException("错误的 unicode category 类型");
+                        }
+                    } else {
+                        if (name.startsWith("In")) {
+                            // \p{InBlockName}
+                            predicate = CharPredicates.forUnicodeBlock(name.substring(2));
+                        } else if (name.startsWith("Is")) {
+                            // \p{IsGeneralCategory} and \p{IsScriptName}
+                            String shortName = name.substring(2);
+                            predicate = CharPredicates.forUnicodeProperty(shortName, Modifier.openCaseInsensitive(modifier));
+                            if (predicate == null)
+                                predicate = CharPredicates.forProperty(shortName, Modifier.openCaseInsensitive(modifier));
+                            if (predicate == null)
+                                predicate = CharPredicates.forUnicodeScript(shortName);
+                        } else {
+                            if (Modifier.openUnicodeCharacterClass(modifier))
+                                predicate = CharPredicates.forPOSIXName(name, Modifier.openCaseInsensitive(modifier));
+                            if (predicate == null)
+                                predicate = CharPredicates.forProperty(name, Modifier.openCaseInsensitive(modifier));
+                        }
+                        if (predicate == null)
+                            throw new RuntimeException("错误的 unicode category 类型");
+                    }
+                    type =  Terminal.P;break;
+                default:
+                    character = getCh();
+                    next();
+                    break;
+            }
+        }
+        return new TerminatorMsg(type,predicate,character);
+    }
+
+
+    private Ast single() {
+        TerminalAst ast;
+        //readTerminator会自动执行next()
+        TerminatorMsg terminatorMsg = readTerminator();
+        Character ch = terminatorMsg.ch;
+        // 当没有转义符号时
+        if (terminatorMsg.type == Terminal.SIMPLE && !terminatorMsg.hasTrans) {
+            if(ch == '^') {
+                ast =  new TerminalAst(Terminal.START);
+            } else if (ch == '$') {
+                ast = new TerminalAst(Terminal.END);
+            } else if (ch == '.') {
+                CharPredicates.CharPredicate charPredicate;
+                if (Modifier.openDotAll(modifier)) {
+                    charPredicate = CharPredicates.ALL();
+                } else {
+                    if (Modifier.openUnixLine(modifier)) {
+                        charPredicate = CharPredicates.UNIXDOT();
+                    } else {
+                        charPredicate = CharPredicates.DOT();
+                    }
+                }
+                ast =  new TerminalAst(Terminal.COMPOSITE);
+                ast.predicate = charPredicate;
+            } else if(ch == '[') {
+                CharPredicates.CharPredicate classes = processClasses();
+                ast = new TerminalAst(Terminal.COMPOSITE);
+                ast.predicate = classes;
+            } else if(ch == '('){
+                return processGroup();
+            } else {
+                ast = new TerminalAst(ch,Terminal.SIMPLE);
+            }
+        }else if(Terminal.SIMPLE == terminatorMsg.type){
+            ast = new TerminalAst(ch,Terminal.SIMPLE);
+        }else {
+            //复杂类型 \\d, \\s
+            ast = new TerminalAst(terminatorMsg.type);
+            ast.predicate = terminatorMsg.charPredicate;
+        }
+        //设置终结符的模式修正
+        ast.modifier = modifier;
+        return ast;
+    }
+
+    private CharPredicates.CharPredicate processClasses(){
+        boolean isNegative = checkAndNext('^');
+        //[]里面也可以放 \d,\w这种,
+        int type = Terminal.COMPOSITE;
+        Set<Character> chs = new HashSet<>();
+        // [ 后面的]是普通字符
+        if (getCh() == ']') {
+            chs.add(']');
+            next();
+        }
+        int level = 1;
+        CharPredicates.CharPredicate result = new CharPredicates.EmptyCharPredicate();
+        while (level != 0 && !isEnd()) {
+            if(getCh() =='['){
+                next();
+                if (getCh() == ']') {
+                    chs.add(']');
+                    next();
+                }
+                level++;
+            } else if(getCh() == ']'){
+                next();
+                level--;
+            }else  {
+                //读取字符类型并自动跳过
+                TerminatorMsg curTerminatorMsg = readTerminator();
+                if (curTerminatorMsg.type == Terminal.B || curTerminatorMsg.type == Terminal.b) {
+                    throw new RuntimeException("[]中不允许有\\b,\\B");
+                }
+                //普通字符
+                if (curTerminatorMsg.type == Terminal.SIMPLE) {
+                    if (getCh() == '-' && getNext() != ']') {
+                        next(1);
+                        TerminatorMsg end = readTerminator();
+                        if (end.type != Terminal.SIMPLE) {
+                            throw new RuntimeException("[]包含错误的字符范围");
+                        }
+                        CharPredicates.CharPredicate range = processRange(curTerminatorMsg.ch, end.ch);
+                        result = result.union(range);
+                    } else{
+                       //将字符放入chs集合中
+                       singleCharCaseInsensitive(curTerminatorMsg.ch,chs);
+                    }
+                } else {
+                    //复杂类型
+                    result = result.union(curTerminatorMsg.charPredicate);
+                    type = type | curTerminatorMsg.type;
+                }
+            }
+        }
+        result = result.union(chs::contains);
+        if (isNegative) {
+            result = result.negate();
+        }
+        return result;
+    }
+
+
+    private void singleCharCaseInsensitive(char ch, Set<Character> chs) {
+        chs.add(ch);
+        if (Modifier.openCaseInsensitive(modifier)) {
+            if (Modifier.openUnicodeCharacterClass(modifier)) {
+                chs.add(Character.toUpperCase(ch));
+                chs.add(Character.toLowerCase(ch));
+            } else{
+                chs.add((char) ASCII.toUpper(ch));
+                chs.add((char) ASCII.toLower(ch));
+            }
         }
     }
 
-    private Ast single() {
-        TerminalAst terminator;
-        char ch = getCh();
-        if (ch == '\\') {
-            next();
-            ch = getCh();
-            //引用组
-            if (Terminal.isNumber(ch)) {
-                int groupCount = getNum();
-                terminator = new TerminalAst(Terminal.GROUP_CAPTURE | groupCount);
-            } else {
-                int type = getTerminalType(ch);
-                if (type == Terminal.SIMPLE) {
-                    terminator = new TerminalAst(ch, Terminal.SIMPLE);
-                } else {
-                    terminator = new TerminalAst(type);
-                }
-                next();
-            }
-            return terminator;
+    private CharPredicates.CharPredicate processRange(char start, char end) {
+        CharPredicates.CharPredicate range = CharPredicates.range(start, end);
+        if (Modifier.openUnicodeCharacterClass(modifier)) {
+            char upperStart = Character.toUpperCase(start);
+            char upperEnd = Character.toUpperCase(end);
+            char lowerStart = Character.toLowerCase(start);
+            char lowerEnd = Character.toLowerCase(end);
+            range = range.union(CharPredicates.range(upperStart, upperEnd))
+                    .union(CharPredicates.range(lowerStart, lowerEnd));
+        } else{
+            char upperStart = (char) ASCII.toUpper(start);
+            char upperEnd = (char) ASCII.toUpper(end);
+            char lowerStart = (char) ASCII.toLower(start);
+            char lowerEnd = (char) ASCII.toLower(end);
+            range = range.union(CharPredicates.range(upperStart, upperEnd))
+                    .union(CharPredicates.range(lowerStart, lowerEnd));
         }
-        if (ch == '^') {
-            next();
-            return new TerminalAst(Terminal.START);
-        }
-        if (ch == '$') {
-            next();
-            return new TerminalAst(Terminal.END);
-        }
-        if (ch == '.') {
-            next();
-            return new TerminalAst(Terminal.DOT);
-        }
-        if (ch == '[') {
-            next();
-            boolean isNegative = checkAndNext('^');
-            //[]里面也可以放 \d,\w这种,
-            int type = Terminal.COMPOSITE;
-            Set<Character> chs = new HashSet<>();
-            int level = 1;
-            List<TerminalAst.CharRange> ranges = new ArrayList<>();
-            while (level != 0 && !isEnd()) {
-                if(getCh() =='['){
-                    next();
-                    level++;
-                } else if(getCh() == ']'){
-                    next();
-                    level--;
-                }else if (getCh() == '\\') {
-                    next();
-                    ch = getCh();
-                    int tempType = getTerminalType(ch);
-                    if (tempType != 0) {
-                        type = type | tempType;
-                    } else {
-                        chs.add(ch);
-                    }
-                    next();
-                }
-                else if (getNext() == '-' && getNext(2) != ']') {
-                    char start = getCh();
-                    next(2);
-                    char end = getCh();
-                    next();
-                    ranges.add(new TerminalAst.CharRange(start, end));
-                } else {
-                    chs.add(getCh());
-                    next();
-                }
-            }
-            return new TerminalAst(isNegative, chs, ranges, type);
-        }
-        // 遇到分组
-        if (ch == '(') {
-            return processGroup();
-        }
-        next();
-        return new TerminalAst(ch, Terminal.SIMPLE);
+        return range;
     }
     private Ast processGroup(){
         int groupType = Group.CATCH_GROUP;
-        next();
+        //每个组都有私有的模式修正符
+        int curModifiers = modifier;
         String groupName = null;
-        //处理模式修饰符 openFlag bit全为0，closeFlag全为1
-        int openFlag = 0, closeFlag = Util.NONE;
         if (getCh() == '?') {
             next();
             // (?n)  开启命名捕获，默认开启
@@ -387,31 +557,30 @@ class RegexToASTree {
                     next();
                     continue;
                 } else if(ch == 'd'){
-                    openFlag |= negative ? openFlag: Modifier.UNIX_LINES;
-                    closeFlag &= negative ? Modifier.CLOSE_UNIX_LINES : closeFlag;
+                    modifier |= negative ? modifier: Modifier.UNIX_LINES;
+                    modifier &= negative ? Modifier.CLOSE_UNIX_LINES : modifier;
                 }  else if(ch =='i'){
-                    openFlag |= negative ? openFlag: Modifier.CASE_INSENSITIVE;
-                    closeFlag &= negative ? Modifier.CLOSE_CASE_INSENSITIVE : closeFlag;
+                    modifier |= negative ? modifier: Modifier.CASE_INSENSITIVE;
+                    modifier &= negative ? Modifier.CLOSE_CASE_INSENSITIVE : modifier;
                 } else if(ch == 'x'){
-                    openFlag |= negative ? openFlag: Modifier.COMMENT;
-                    closeFlag &= negative ? Modifier.CLOSE_COMMENT : closeFlag;
+                    modifier |= negative ? modifier: Modifier.COMMENT;
+                    modifier &= negative ? Modifier.CLOSE_COMMENT : modifier;
                 } else if (ch == 'm') {
-                    openFlag |= negative ? openFlag: Modifier.MULTILINE;
-                    closeFlag &= negative ? Modifier.CLOSE_MULTILINE : closeFlag;
+                    modifier |= negative ? modifier: Modifier.MULTILINE;
+                    modifier &= negative ? Modifier.CLOSE_MULTILINE : modifier;
                 } else if (ch == 's') {
-                    openFlag |= negative ? openFlag: Modifier.DOTALL;
-                    closeFlag &= negative ? Modifier.CLOSE_DOTALL : closeFlag;
-                } else if(ch ==')'){
+                    modifier |= negative ? modifier: Modifier.DOTALL;
+                    modifier &= negative ? Modifier.CLOSE_DOTALL : modifier;
+                } else if(ch=='U'){
+                    modifier |= negative ? modifier: Modifier.UNICODE_CHARACTER_CLASS;
+                    modifier &= negative ? Modifier.CLOSE_UNICODE_CHARACTER_CLASS : modifier;
+                }else if(ch ==')'){
                     // -) 错误的结尾
                     if (negative) {
                         throw new RuntimeException("不支持的分组类型");
                     }
-                    // 全局模式修正符
                     next();
-                    ModifierAst modifierAst = new ModifierAst();
-                    modifierAst.setModifierFlag(openFlag,closeFlag);
-                    hasModifier = true;
-                    return modifierAst;
+                    return new EmptyAst();
                 } else if(ch == ':'){
                     break;
                 } else{
@@ -421,15 +590,7 @@ class RegexToASTree {
                 next();
             }
             switch (getCh()){
-                case ':':
-                    //说明有模式修正符
-                    if(openFlag !=0 || closeFlag !=Util.NONE){
-                        hasModifier = true;
-                        groupType = Group.NOT_CATCH_GROUP_WITH_MODIFIER;
-                    } else{
-                        groupType = Group.NOT_CATCH_GROUP;
-                    }
-                    break;
+                case ':': groupType = Group.NOT_CATCH_GROUP;break;
                 case '=':groupType = Group.FORWARD_POSTIVE_SEARCH;break;
                 case '!':groupType = Group.FORWARD_NEGATIVE_SEARCH;break;
                 case '<':next();
@@ -454,41 +615,78 @@ class RegexToASTree {
         }
         int groupNum = globalGroupCount++;
         Ast asTree = orTree();
+        //跳过)
         next();
         //设置组信息
         asTree.groupName = groupName;
         asTree.catchGroupNum = catchGroupNum;
         asTree.groupType = groupType;
         asTree.globalGroupNum = groupNum;
-        asTree.openFlag = openFlag;
-        asTree.closeFlag = closeFlag;
         if (groupType == Group.CATCH_GROUP) {
             catchGroups.add(asTree);
         }
+        modifier = curModifiers;
         allGroups.add(asTree);
         return asTree;
     }
     private String readGroupName() {
         StringBuilder sb = new StringBuilder();
-        if (!Terminal.isUpper(getCh()) && !Terminal.isLower(getCh())) {
+        if (!ASCII.isUpper(getCh()) && !ASCII.isLower(getCh())) {
             throw new RuntimeException("分组命名以大小写字母开头");
         }
         do {
             sb.append((getCh()));
             next();
-        } while (Terminal.isUpper(getCh()) || Terminal.isLower(getCh()) || Terminal.isNumber(getCh()));
+        } while (ASCII.isUpper(getCh()) || ASCII.isLower(getCh()) || ASCII.isDigit(getCh()));
         if (getCh() != '>')
             throw new RuntimeException("分组命名以>结尾");
         return sb.toString();
     }
     private int getNum() {
         int num = 0;
-        while (!isEnd() && Terminal.isNumber(getCh())) {
+        while (!isEnd() && ASCII.isDigit(getCh())) {
             num *= 10;
             num += getCh() - '0';
             next();
         }
         return num;
+    }
+
+
+    /**
+     * terminator 类型信息
+     */
+    private static class TerminatorMsg {
+       int type;
+        /**
+         * \p{} [:punct:] 复杂类型用得到
+         */
+       CharPredicates.CharPredicate charPredicate;
+
+       Character ch;
+
+       boolean hasTrans = false;
+
+        public TerminatorMsg(int type) {
+            this.type = type;
+        }
+
+        public TerminatorMsg(int type,Character ch) {
+            this.type = type;
+            this.ch = ch;
+        }
+        public TerminatorMsg(int type,Character ch,boolean hasTrans) {
+            this.type = type;
+            this.ch = ch;
+            this.hasTrans = hasTrans;
+        }
+
+        public TerminatorMsg(int type, CharPredicates.CharPredicate charPredicate,Character character) {
+            this.type = type;
+            this.charPredicate = charPredicate;
+            this.ch = character;
+            hasTrans = true;
+        }
     }
 
 }

@@ -52,16 +52,7 @@ public class ASTMatcher {
      */
     final int[] numAstMaxI;
 
-    /**
-     * 记录处理分组时的 模式修正符，用于还原
-     */
-    int[] groupModifier;
-    /**
-     * 模式修正符
-     */
-    int modifier = 0;
 
-    final boolean hasModifier;
     final List<Ast> allGroups;
 
 
@@ -93,11 +84,6 @@ public class ASTMatcher {
          Arrays.fill(numAstCircleNum,0);
          Arrays.fill(numAstMaxI,Util.NONE);
          allGroups = regexToASTree.allGroups;
-         hasModifier = regexToASTree.hasModifier;
-         if (hasModifier) {
-             groupModifier = new int[regexToASTree.globalGroupCount];
-         }
-         this.modifier = pattern.modifiers;
     }
 
     /**
@@ -292,13 +278,9 @@ public class ASTMatcher {
             if (terminalAst.isGroupType()) {
                 count = terminalAst.matchGroup(str,i, this);
                 //处理表达式引用
-            } else if (terminalAst.isExpressionType() && !terminalAst.isRecursiveType()) {
-                return false;//searchExpression(terminalAst, i, end);
-            } else if (terminalAst.isRecursiveType()) {
-                return false;//searchRecursive(terminalAst, i, end);
             } else {
                 //普通字符的匹配
-                count = terminalAst.match(str, i, end,modifier,matchMode,hasModifier);
+                count = terminalAst.match(str, i, end,matchMode);
             }
             // 匹配失败
             if (count < 0) {
@@ -309,11 +291,6 @@ public class ASTMatcher {
         }
         //直接跳转到下个节点
         if (tree instanceof EmptyAst) {
-            return searchTree(getNextAndGroupEndCheck(tree, i), i, end);
-        }
-        if (tree instanceof ModifierAst) {
-            modifier = modifier | tree.openFlag;
-            modifier = modifier & tree.closeFlag;
             return searchTree(getNextAndGroupEndCheck(tree, i), i, end);
         }
         if (tree instanceof CatAst) {
@@ -539,19 +516,10 @@ public class ASTMatcher {
             }
         }
         if (ast.groupType != 0) {
-            if (hasModifier) {
-                //记录当前的模式修正符
-                groupModifier[ast.globalGroupNum] = modifier;
-                //设置新的模式修正符号
-                modifier = modifier | ast.openFlag;
-                modifier = modifier & ast.closeFlag;
-            }
             if (ast.groupType == Group.CATCH_GROUP) {
                 groupCatch[ast.catchGroupNum * 2] = i;
             } else if (ast.groupType == Group.NOT_CATCH_GROUP) {
                 //do nothing
-            } else if (ast.groupType == Group.NOT_CATCH_GROUP_WITH_MODIFIER) {
-                // do nothing
             } else {
                 //预查不消耗字符，为了复用原先的ast，需要记录ast当前状态，用于还原。表达式调用同理
                 Ast result = null;
@@ -605,10 +573,6 @@ public class ASTMatcher {
                Ast leaveGroup = allGroups.get(ast.nextLeaveGroupNum);
                 //捕获成功
                 groupCatch[leaveGroup.catchGroupNum * 2 + 1] = i;
-            }
-            //还原模式修正符号
-            if (hasModifier) {
-                modifier = groupModifier[ast.nextLeaveGroupNum];
             }
         }
         return ast.getNext();

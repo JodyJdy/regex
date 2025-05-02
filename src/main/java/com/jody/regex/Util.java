@@ -62,7 +62,9 @@ class Util {
         int i = 0;
         while(i < n){
             //合并 ast(i)和 ast(i+1)
+            // 连续的字符一定有 相同的
             if(couldMergeTerminal(astList.get(i))){
+                TerminalAst ast = ((TerminalAst) astList.get(i));
                 int j = i + 1;
                 while(j <n && couldMergeTerminal(astList.get(j))){
                     j++;
@@ -80,7 +82,10 @@ class Util {
                             sb.append(t.cs);
                         }
                     }
-                    result.add(new TerminalAst(sb.toString(),Terminal.SIMPLE));
+                    //保持相同的模式修正符
+                    TerminalAst terminalAst = new TerminalAst(sb.toString(), Terminal.SIMPLE);
+                    terminalAst.modifier = ast.modifier;
+                    result.add(terminalAst);
                     i = j;
                 }
             } else{

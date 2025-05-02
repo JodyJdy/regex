@@ -43,14 +43,6 @@ abstract class Ast implements Cloneable{
     int nodeMinNumAstNo = Integer.MAX_VALUE;
     int nodeMaxNumAstNo = Util.NONE;
 
-    /**
-     *开启的flag
-     */
-    int openFlag = 0;
-    /**
-     * 关闭的flag
-     */
-    int closeFlag = Util.NONE;
 
 
     @Override
@@ -66,8 +58,4 @@ abstract class Ast implements Cloneable{
         this.next = next;
     }
 
-    void setModifierFlag(int openFlag, int closeFlag) {
-        this.openFlag = openFlag;
-        this.closeFlag = closeFlag;
-    }
 }

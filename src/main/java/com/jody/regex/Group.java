@@ -27,13 +27,5 @@ class Group {
      */
 
     static final int BACKWARD_NEGATIVE_SEARCH = 6;
-
-
-    /**
-     *不捕获组， 并且 带有模式修正
-     * 例如：
-     * (?i:asldf)
-     */
-    static final int NOT_CATCH_GROUP_WITH_MODIFIER = 7;
 }
 

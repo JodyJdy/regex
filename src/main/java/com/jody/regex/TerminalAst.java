@@ -14,25 +14,15 @@ class TerminalAst extends Ast implements Cloneable {
      */
     String cs;
     /**
-     * 是否取反
+     * \p{}和[:puc:]格式时
      */
-    private boolean isNegative = false;
-    /**
-     * [abc]
-     */
-    private Set<Character> chars;
-
-    private List<CharRange> charRanges;
+    CharPredicates.CharPredicate predicate;
 
     /**
-     * 递归表达式是否是贪婪模式
-     * 默认是贪婪模式  \\g<0>
+     * 当前的模式修正符
      */
-    boolean recursiveGreedy = true;
-    /**
-     *递归表达式的编号
-     */
-    int recursiveNo = Util.NONE;
+    int modifier = 0;
+
 
     TerminalAst(int type) {
         this.type = type;
@@ -48,27 +38,11 @@ class TerminalAst extends Ast implements Cloneable {
         this.type = type;
     }
 
-    TerminalAst(boolean isNegative, Set<Character> chars, List<CharRange> ranges, int type) {
-        this.isNegative = isNegative;
-        this.chars = chars;
-        this.charRanges = ranges;
-        this.type = type;
-    }
 
     boolean isGroupType() {
         return Terminal.isGroupType(type);
     }
 
-    boolean isExpressionType() {
-        return Terminal.isExpression(type);
-    }
-
-    /**
-     * 递归调用自身的类型
-     */
-    boolean isRecursiveType() {
-        return isExpressionType() && getReferenceGroupNum() == 0;
-    }
 
     /**
      * 两种情况 单词字符跟着非单词字符 和  非单词字符跟着单词字符， 相邻的两个非单词字符不是单词边界
@@ -77,6 +51,9 @@ class TerminalAst extends Ast implements Cloneable {
      * !!!! 单词边界也不考虑 end
      */
     private int isWordBorder(String str, int i) {
+        CharPredicates.CharPredicate w   = Modifier.openUnicodeCharacterClass(modifier) ?
+                CharPredicates.WORD() :CharPredicates.ASCII_WORD();
+        CharPredicates.CharPredicate W   = w.negate();
         //开始和结尾处的单词边界
         if (i == 0) {
             // "" 不是单词边界
@@ -84,20 +61,20 @@ class TerminalAst extends Ast implements Cloneable {
                return Util.NONE;
             }
             // "a"   匹配  \\ba
-            if(Terminal.isw(str.charAt(i))){
+            if(w.isCh(str.charAt(i))){
                 return 0;
             }
         }
         if (i == str.length()) {
-            if (Terminal.isw(str.charAt(i - 1))) {
+            if (w.isCh(str.charAt(i - 1))) {
                 return 0;
             }
             return Util.NONE;
         }
         //字符串中的边界
         if (i > 0) {
-            if (Terminal.isW(str.charAt(i - 1)) && Terminal.isw(str.charAt(i))
-                    || Terminal.isw(str.charAt(i - 1)) && Terminal.isW(str.charAt(i))) {
+            if (W.isCh(str.charAt(i - 1)) && w.isCh(str.charAt(i))
+                    || w.isCh(str.charAt(i - 1)) && W.isCh(str.charAt(i))) {
                 return 0;
             }
         }
@@ -107,7 +84,7 @@ class TerminalAst extends Ast implements Cloneable {
     /**
      * 返回匹配到的数量
      */
-    int match(String str, int i, int end,int modifier,boolean matchMode,boolean hasModifier) {
+    int match(String str, int i, int end,boolean matchMode) {
         //边界符号，匹配成功返回0，因为边界符号不占空间
         if (Terminal.isB(type) || Terminal.isb(type)) {
             int result = isWordBorder(str, i);
@@ -126,7 +103,7 @@ class TerminalAst extends Ast implements Cloneable {
                 return 0;
             }
             //查找模式下，开启了多行， \r \n 匹配 ^
-            if (hasModifier && !matchMode && i > 0 && Modifier.openMultiline(modifier)) {
+            if (modifier != 0 && !matchMode && i > 0 && Modifier.openMultiline(modifier)) {
                 if(str.charAt(i-1)=='\n'||(!Modifier.openUnixLine(modifier)&& str.charAt(i-1)=='\r')){
                     return 0;
                 }
@@ -139,7 +116,7 @@ class TerminalAst extends Ast implements Cloneable {
                 return 0;
             }
             //查找模式下，开启了多行， \r \n 匹配 ^
-            if (hasModifier && !matchMode && Modifier.openMultiline(modifier)) {
+            if (modifier != 0 && !matchMode && Modifier.openMultiline(modifier)) {
                 if(str.charAt(i)=='\n'||(!Modifier.openUnixLine(modifier)&& str.charAt(i)=='\r')){
                     return 0;
                 }
@@ -153,7 +130,7 @@ class TerminalAst extends Ast implements Cloneable {
         }
         char chi = str.charAt(i);
         //大小写不敏感
-        boolean caseInsensitive = hasModifier && Modifier.openCaseInsensitive(modifier);
+        boolean caseInsensitive = Modifier.openCaseInsensitive(modifier);
         // 普通的字符比较
         if (Terminal.isSimple(type)) {
             //单个字符比较
@@ -179,30 +156,8 @@ class TerminalAst extends Ast implements Cloneable {
             }
             return cs.length();
         }
-        //复杂类型, []
-        boolean result = false;
-        if (Terminal.isComposite(type)) {
-            result = chars.contains(chi);
-            if (!result && caseInsensitive) {
-                if (Character.isUpperCase(chi)) {
-                    result = chars.contains(Character.toLowerCase(chi));
-                } else{
-                    result = chars.contains(Character.toUpperCase(chi));
-                }
-            }
-            for (CharRange charRange : charRanges) {
-                result = result || charRange.match(chi,caseInsensitive);
-                if (result) {
-                    break;
-                }
-            }
-        }
-        //\d,\w...类型
-        if (!result && type != 0) {
-            result = Terminal.match(chi, type,modifier);
-        }
-        if (isNegative != result) {
-            return 1;
+        if (predicate != null && predicate.isCh(chi)) {
+           return 1;
         }
         return Util.NONE;
     }
@@ -243,34 +198,6 @@ class TerminalAst extends Ast implements Cloneable {
     protected Object clone() throws CloneNotSupportedException {
         return super.clone();
     }
-
-    /**
-     * a-z存储字符范围
-     */
-    static class CharRange {
-        char left;
-        char right;
-
-        public CharRange(char left, char right) {
-            this.left = left;
-            this.right = right;
-        }
-
-        boolean match(char ch,boolean caseInsensitive) {
-            boolean result =ch >= left && ch <= right;
-            if (!result && caseInsensitive) {
-                if (Character.isUpperCase(ch)) {
-                    char temp = Character.toLowerCase(ch);
-                    result = temp>=left && temp<=right;
-                } else{
-                    char temp = Character.toUpperCase(ch);
-                    result = temp>=left && temp<=right;
-                }
-            }
-            return result;
-        }
-    }
-
     /**
      *获取应用的组的编号：
      *  组引用/表达式应用
