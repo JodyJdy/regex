@@ -275,11 +275,38 @@ class RegexToASTree {
         ch = getCh();
         //以转移符号 \\开头的内容
         //引用组
-        if (ASCII.isDigit(ch)) {
+        if (ASCII.isDigit(ch) && ch != '0') {
             int groupCount = getNum();
             type = Terminal.GROUP_CAPTURE | groupCount;
         } else {
             switch (ch) {
+                // \0mnnn 最多不读取三个数字
+                case '0':next();
+                char ch1 = getCh();
+                    if (!ASCII.isDigit(ch1)|| ch1 > '7') {
+                        throw new RuntimeException("错误的8进制序列");
+                    }
+                    next();
+                    character = (char) (ch1 - '0');
+                    if (isEnd()) {
+                        break;
+                    }
+                    char ch2 = getCh();
+                    // \0n
+                    if (!ASCII.isDigit(ch2)|| ch2 > '7'){
+                        break;
+                    }
+                    next();
+                    character = (char) Integer.parseInt(ch1 +String.valueOf(ch2),8);
+                    if (isEnd()) {
+                        break;
+                    }
+                    char ch3 = getCh();
+                    if (!ASCII.isDigit(ch3)||  ch3 > '7' || ch1 > 3){
+                        break;
+                    }
+                    character = (char) Integer.parseInt(ch1 +String.valueOf(ch2)+ ch3,8);
+                    break;
                 case 'c': next(); character = (char) (getCh() ^ 64);next();break;
                 case 'a': character = '\u0007';next();break;
                 case 'e': character = '\u001B';next();break;
