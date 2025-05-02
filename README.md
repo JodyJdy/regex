@@ -65,5 +65,4 @@ String g1 = matcher.group("group");
 
 ## todo
 [[]&&[]]
-(?x)
 \G
