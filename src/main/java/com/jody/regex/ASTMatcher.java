@@ -450,10 +450,11 @@ public class ASTMatcher {
                 numAstCircleNum[numAstNo] = curCircle + 1;
                 if (searchTree(rangeAst.ast, i, end)) {
                     return true;
+                } else{
+                    numAstCircleNum[numAstNo] = curCircle;
+                    numAstMaxI[numAstNo] = Util.NONE;
                 }
             }
-            //搜索下个节点时，清除当前状态
-            numAstCircleNum[numAstNo]= 0;
             return searchTree(getNextAndGroupEndCheck(rangeAst, i), i, end);
             //match模式 或者 find模式的非贪心查找
         } else {
