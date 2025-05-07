@@ -61,9 +61,6 @@ class RegexToASTree {
         return i >= regex.length();
     }
 
-    private char getNext(int n) {
-        return regex.charAt(i + n);
-    }
 
     private char getNext() {
         return regex.charAt(i + 1);
@@ -246,9 +243,7 @@ class RegexToASTree {
             }
             //非贪婪模式
             if (!isEnd() && getCh() == '?') {
-                if (single instanceof NumAst) {
-                    ((NumAst) single).greedy = false;
-                }
+                ((NumAst) single).greedy = false;
                 next();
             }
         }
@@ -480,7 +475,7 @@ class RegexToASTree {
                     StringBuilder sb = new StringBuilder();
                     while (!isEnd()) {
                         //遇到结尾
-                       if(getCh() =='\\' && i+1<regex.length() && getNext() =='E'){
+                       if(getCh() =='\\' && !isNextEnd() && getNext() =='E'){
                            next(2);
                            break;
                         } else{
@@ -585,7 +580,7 @@ class RegexToASTree {
                 }
                 //普通字符
                 if (curTerminatorMsg.type == Terminal.SIMPLE) {
-                    if (getCh() == '-' && getNext() != ']') {
+                    if (getCh() == '-' && !isNextEnd() && getNext() != ']') {
                         next(1);
                         TerminatorMsg end = readTerminator();
                         if (end == null || end.type != Terminal.SIMPLE) {
@@ -830,18 +825,10 @@ class RegexToASTree {
 
        boolean hasTrans = false;
 
-        public TerminatorMsg(int type) {
-            this.type = type;
-        }
 
         public TerminatorMsg(int type,Character ch) {
             this.type = type;
             this.ch = ch;
-        }
-        public TerminatorMsg(int type,Character ch,boolean hasTrans) {
-            this.type = type;
-            this.ch = ch;
-            this.hasTrans = hasTrans;
         }
 
         public TerminatorMsg(int type, CharPredicates.CharPredicate charPredicate,Character character,String chs) {
