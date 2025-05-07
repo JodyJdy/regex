@@ -54,6 +54,10 @@ public class ASTMatcher {
 
 
     final List<Ast> allGroups;
+    /**
+     * 分组是否处于预查的情况情况
+     */
+    final  boolean[]  presearch;
 
 
 
@@ -84,6 +88,7 @@ public class ASTMatcher {
          Arrays.fill(numAstCircleNum,0);
          Arrays.fill(numAstMaxI,Util.NONE);
          allGroups = regexToASTree.allGroups;
+         presearch = new boolean[allGroups.size()];
     }
 
     /**
@@ -540,7 +545,9 @@ public class ASTMatcher {
                 groupCatch[ast.catchGroupNum * 2] = i;
             } else if (ast.groupType == Group.NOT_CATCH_GROUP) {
                 //do nothing
-            } else {
+            } else if(!presearch[ast.globalGroupNum]) {
+                //当前不处于预查，开启预查
+                presearch[ast.globalGroupNum] = true;
                 //预查不消耗字符，为了复用原先的ast，需要记录ast当前状态，用于还原。表达式调用同理
                 Ast result = null;
                 //记录好当前状态，并做好预查的准备
@@ -551,10 +558,7 @@ public class ASTMatcher {
                 curEndAst = next;
                 //预查使用匹配模式
                 this.matchMode = true;
-                //查询前，需要将ast的groupType设置成非预查模式，不然会不断的进入这里的代码，
                 int groupType = ast.groupType;
-                //不捕获
-                ast.groupType = Group.NOT_CATCH_GROUP;
                 if (groupType == Group.FORWARD_POSTIVE_SEARCH) {
                     if (findForwardChangeEnd(i, i, str.length(), ast)) {
                         result = next;
@@ -573,10 +577,11 @@ public class ASTMatcher {
                         result = next;
                     }
                 }
-                //状态还原
-                ast.groupType = groupType;
+                //预查标记
                 curEndAst = endAst;
                 matcherStatus.resumeStatus();
+                //关闭预查标记
+                presearch[ast.globalGroupNum] = false;
                 //如果 ast.getNext()也是一个预查节点，应该再次处理
                 return groupStartCheck(result, i, str);
             }
