@@ -54,6 +54,9 @@ class RegexToASTree {
         this.modifier = modifier;
     }
 
+    public boolean isNextEnd() {
+        return i + 1 >= regex.length();
+    }
     public boolean isEnd() {
         return i >= regex.length();
     }
@@ -558,30 +561,25 @@ class RegexToASTree {
 
     private CharPredicates.CharPredicate processClasses(){
         boolean isNegative = checkAndNext('^');
-        //[]里面也可以放 \d,\w这种,
-        int type = Terminal.COMPOSITE;
-        Set<Character> chs = new HashSet<>();
         // [ 后面的]是普通字符
+        CharPredicates.CharPredicate result = new CharPredicates.EmptyCharPredicate();
         if (getCh() == ']') {
-            chs.add(']');
+            result.union(ch -> ch == ']');
             next();
         }
-        int level = 1;
-        CharPredicates.CharPredicate result = new CharPredicates.EmptyCharPredicate();
-        while (level != 0 && !isEnd()) {
+        // a&&b&&c 多个and操作
+        CharPredicates.CharPredicate and = null;
+        while ( !isEnd() && getCh()!=']') {
+            CharPredicates.CharPredicate temp;
             if(getCh() =='['){
                 next();
-                if (getCh() == ']') {
-                    chs.add(']');
-                    next();
-                }
-                level++;
-            } else if(getCh() == ']'){
-                next();
-                level--;
+                temp =  processClasses();
             }else  {
                 //读取字符类型并自动跳过
                 TerminatorMsg curTerminatorMsg = readTerminator();
+                if (curTerminatorMsg == null) {
+                    return result;
+                }
                 if (curTerminatorMsg.type == Terminal.B || curTerminatorMsg.type == Terminal.b) {
                     throw new RuntimeException("[]中不允许有\\b,\\B");
                 }
@@ -590,23 +588,41 @@ class RegexToASTree {
                     if (getCh() == '-' && getNext() != ']') {
                         next(1);
                         TerminatorMsg end = readTerminator();
-                        if (end.type != Terminal.SIMPLE) {
+                        if (end == null || end.type != Terminal.SIMPLE) {
                             throw new RuntimeException("[]包含错误的字符范围");
                         }
-                        CharPredicates.CharPredicate range = processRange(curTerminatorMsg.ch, end.ch);
-                        result = result.union(range);
+                        temp = processRange(curTerminatorMsg.ch, end.ch);
                     } else{
-                       //将字符放入chs集合中
-                        addCharCaseInsensitive(curTerminatorMsg,chs);
+                        temp = processClassesSingleChar(curTerminatorMsg);
                     }
                 } else {
                     //复杂类型
-                    result = result.union(curTerminatorMsg.charPredicate);
-                    type = type | curTerminatorMsg.type;
+                    temp = curTerminatorMsg.charPredicate;
                 }
             }
+            //处理 &&
+            if (getCh() == '&' && !isNextEnd() &&  getNext() == '&') {
+                if (and == null) {
+                    and = temp;
+                } else{
+                    and = and.and(temp);
+                }
+                //跳过&&
+                next(2);
+            } else{
+                //遇到and的结尾了或者没有and
+                if (and != null) {
+                   temp = and.and(temp) ;
+                }
+                and = null;
+            }
+            //未处于and中
+            if (and == null) {
+                result = result.union(temp);
+            }
         }
-        result = result.union(chs::contains);
+        // 跳过 ]
+        next();
         if (isNegative) {
             result = result.negate();
         }
@@ -614,26 +630,50 @@ class RegexToASTree {
     }
 
 
-    private void addCharCaseInsensitive(TerminatorMsg terminatorMsg, Set<Character> chs) {
+    /**
+     *处理[]中的单字符
+     */
+    private CharPredicates.CharPredicate processClassesSingleChar(TerminatorMsg terminatorMsg) {
         if (terminatorMsg.ch != null) {
-            addCharCaseInsensitive(terminatorMsg.ch, chs);
+            final char ch = terminatorMsg.ch;
+            if (Modifier.openCaseInsensitive(modifier)) {
+                if (Modifier.openUnicodeCharacterClass(modifier)) {
+                    char upper = Character.toUpperCase(ch);
+                    char lower = Character.toLowerCase(ch);
+                    if (ch == upper) {
+                        return c->c == ch || c == lower;
+                    } else{
+                        return c->c == ch || c == upper;
+                    }
+                } else{
+                    char upper = (char) ASCII.toUpper(ch);
+                    char lower = (char) ASCII.toLower(ch);
+                    if (ch == upper) {
+                        return c->c == ch || c == lower;
+                    } else{
+                        return c->c == ch || c == upper;
+                    }
+                }
+            }
+            return c->c == ch;
         } else if (terminatorMsg.chs != null) {
+            final Set<Character> chs = new HashSet<>();
             for (int i = 0; i < terminatorMsg.chs.length(); i++) {
-                addCharCaseInsensitive(terminatorMsg.chs.charAt(i), chs);
+                char ch = terminatorMsg.chs.charAt(i);
+                chs.add(ch);
+                if (Modifier.openCaseInsensitive(modifier)) {
+                    if (Modifier.openUnicodeCharacterClass(modifier)) {
+                        chs.add(Character.toUpperCase(ch));
+                        chs.add(Character.toLowerCase(ch));
+                    } else{
+                        chs.add((char) ASCII.toUpper(ch));
+                        chs.add((char) ASCII.toLower(ch));
+                    }
+                }
             }
+            return chs::contains;
         }
-    }
-    private void addCharCaseInsensitive(char ch, Set<Character> chs) {
-        chs.add(ch);
-        if (Modifier.openCaseInsensitive(modifier)) {
-            if (Modifier.openUnicodeCharacterClass(modifier)) {
-                chs.add(Character.toUpperCase(ch));
-                chs.add(Character.toLowerCase(ch));
-            } else{
-                chs.add((char) ASCII.toUpper(ch));
-                chs.add((char) ASCII.toLower(ch));
-            }
-        }
+        return null;
     }
 
     private CharPredicates.CharPredicate processRange(char start, char end) {
@@ -802,7 +842,6 @@ class RegexToASTree {
             this.type = type;
             this.ch = ch;
             this.hasTrans = hasTrans;
-            this.chs = chs;
         }
 
         public TerminatorMsg(int type, CharPredicates.CharPredicate charPredicate,Character character,String chs) {

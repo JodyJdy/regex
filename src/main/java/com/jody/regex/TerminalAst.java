@@ -175,11 +175,12 @@ class TerminalAst extends Ast implements Cloneable {
 
         //大小写不敏感
         boolean caseInsensitive = Modifier.openCaseInsensitive(modifier);
+        boolean openUnicode = Modifier.openUnicodeCharacterClass(modifier);
         // 普通的字符比较
         if (Terminal.isSimple(type)) {
             //单个字符比较
             if (this.c != null) {
-                if(chi == this.c || caseInsensitive && Character.toLowerCase(chi) == Character.toLowerCase(this.c)) {
+                if (singleCharEqual(chi, this.c, caseInsensitive, openUnicode)) {
                     return 1;
                 }
                 return Util.NONE;
@@ -189,12 +190,9 @@ class TerminalAst extends Ast implements Cloneable {
             }
             //多个字符比较
             for (int x = 0; x < cs.length(); x++) {
-                if (str.charAt(i + x) == cs.charAt(x)) {
+                if(singleCharEqual(str.charAt(i+x),cs.charAt(x),caseInsensitive,openUnicode)){
                     //什么也不做
-                } else if (caseInsensitive && Character.toLowerCase(str.charAt(i + x)) == Character.toLowerCase(cs.charAt(x))) {
-                    //什么也不做
-                } else {
-                    //匹配失败
+                } else{
                     return Util.NONE;
                 }
             }
@@ -204,6 +202,20 @@ class TerminalAst extends Ast implements Cloneable {
            return 1;
         }
         return Util.NONE;
+    }
+
+    private boolean singleCharEqual(char a, char b, boolean caseInsensitive, boolean openUnicode){
+        if(a == b) {
+            return true;
+        }
+        if (caseInsensitive) {
+            if (openUnicode) {
+                return Character.toLowerCase(a) == Character.toLowerCase(b);
+            } else{
+                return ASCII.toLower(a) == ASCII.toLower(b);
+            }
+        }
+        return false;
     }
 
     /**

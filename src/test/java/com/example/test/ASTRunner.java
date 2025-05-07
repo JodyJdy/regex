@@ -122,9 +122,11 @@ public class ASTRunner {
            for (String str : TestCase.tests[i]) {
                if(pattern.matcher(str).matches() != astPattern.matcher(str).isMatch()){
                    System.out.println("match测试错误: regex:"+ TestCase.regexs[i]+ "\n str:"+str);
+                   break;
                }
               if(pattern.matcher(str).find() != astPattern.matcher(str).find()){
                   System.out.println("find测试错误: regex:"+ TestCase.regexs[i]+ "\n str:"+str);
+                  break;
               }
            }
        }
