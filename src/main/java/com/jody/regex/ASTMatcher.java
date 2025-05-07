@@ -501,6 +501,7 @@ public class ASTMatcher {
             return false;
         }
         //还原
+        clearNumAstStatus(unfixed);
         return searchTree(getNextAndGroupEndCheck(unfixed, i), i, end);
     }
 
