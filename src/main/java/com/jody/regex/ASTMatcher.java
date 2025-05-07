@@ -353,7 +353,14 @@ public class ASTMatcher {
             if (search) {
                 return true;
             }
-            return searchTree(getNextAndGroupEndCheck(numAst, i), i, end);
+            NumAstStatus astStatus = new NumAstStatus(numAst);
+            clearNumAstStatus(numAst);
+            boolean r =  searchTree(getNextAndGroupEndCheck(numAst, i), i, end);
+            if (!r) {
+                astStatus.resumeStatus();
+            }
+            return r;
+
             //match模式或者 find模式的非贪心查找，此时优先处理next节点
         } else {
             boolean search = searchTree(getNextAndGroupEndCheck(numAst, i), i, end);
@@ -409,7 +416,13 @@ public class ASTMatcher {
                 numAstCircleNum[numAstNo] = 0;
                 return true;
             }
-            return searchTree(getNextAndGroupEndCheck(numAst, i), i, end);
+            NumAstStatus astStatus = new NumAstStatus(numAst);
+            clearNumAstStatus(numAst);
+            boolean r =  searchTree(getNextAndGroupEndCheck(numAst, i), i, end);
+            if (!r) {
+                astStatus.resumeStatus();
+            }
+            return r;
         } else {
             boolean search = searchTree(getNextAndGroupEndCheck(numAst, i), i, end);
             if (search) {
@@ -501,8 +514,13 @@ public class ASTMatcher {
             return false;
         }
         //还原
+        NumAstStatus astStatus = new NumAstStatus(unfixed);
         clearNumAstStatus(unfixed);
-        return searchTree(getNextAndGroupEndCheck(unfixed, i), i, end);
+        boolean r =  searchTree(getNextAndGroupEndCheck(unfixed, i), i, end);
+        if (!r) {
+            astStatus.resumeStatus();
+        }
+        return r;
     }
 
     /**

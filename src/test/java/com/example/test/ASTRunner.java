@@ -115,15 +115,19 @@ public class ASTRunner {
         System.out.println("自己Regex:" + (end2 - start2));
     }
     public static void executeTestCase(){
+        System.out.println("-------------------- 执行测试用例 ---------------");
        for(int i=0;i<TestCase.regexs.length;i++){
           Pattern pattern = Pattern.compile(TestCase.regexs[i]);
           ASTPattern astPattern = ASTPattern.compile(TestCase.regexs[i]);
            for (String str : TestCase.tests[i]) {
-              if(pattern.matcher(str).matches() != astPattern.matcher(str).isMatch()){
-                  System.out.println("测试错误: regex:"+ TestCase.regexs[i]+ "\n str +"+str);
+               if(pattern.matcher(str).matches() != astPattern.matcher(str).isMatch()){
+                   System.out.println("match测试错误: regex:"+ TestCase.regexs[i]+ "\n str:"+str);
+               }
+              if(pattern.matcher(str).find() != astPattern.matcher(str).find()){
+                  System.out.println("find测试错误: regex:"+ TestCase.regexs[i]+ "\n str:"+str);
               }
            }
-           System.out.println("通过");
        }
+        System.out.println("-------------------- 执行测试用例结束 ---------------");
     }
 }
