@@ -343,7 +343,7 @@ class RegexToASTree {
                 case 'f': character = '\f';next();break;
                 case 't': character = '\t';next();break;
                 case 'x':
-                    if (i + 1 + HEX_LEN >= regex.length()) {
+                    if (i + HEX_LEN >= regex.length()) {
                         throw new RuntimeException("错误的16进制序列");
                     }
                     if(regex.charAt(i+1) != '{') {
@@ -364,7 +364,7 @@ class RegexToASTree {
                     }
                     break;
                 case 'u':
-                    if (i + 1 + UNI_CODE_LEN >= regex.length()) {
+                    if (i +  UNI_CODE_LEN >= regex.length()) {
                         throw new RuntimeException("错误的Unicode序列");
                     }
                     character = (char) Integer.valueOf(regex.substring(i + 1 , i + 1 + UNI_CODE_LEN), 16).intValue();
