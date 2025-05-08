@@ -9,11 +9,12 @@ import com.jody.regex.ASTPattern;
 import java.io.*;
 import java.net.URISyntaxException;
 
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ASTRunner {
-    public static void main(String[] args) throws IOException, URISyntaxException {
+    public static void main(String[] args) throws IOException {
         executeTestCase();
         test();
     }
@@ -35,41 +36,76 @@ public class ASTRunner {
      * 测试，主要是高级特性
      */
     public static void testFeature() {
-        System.out.println("--------------------test-------------------");
+        System.out.println("--------------------testFeature-------------------");
         //匹配中文
-        ASTPattern utfPattern = ASTPattern.compile("[\u4E00-\u9FA5]");
+        String utfRegex = "[\u4E00-\u9FA5]";
+        ASTPattern utfPattern = ASTPattern.compile(utfRegex);
         ASTMatcher utfMatcher = utfPattern.matcher("你");
-        System.out.println(utfMatcher.isMatch());
+        boolean utf = utfMatcher.isMatch();
+        if (!utf) {
+            System.out.println("测试:"+utfRegex+"失败");
+        }
         //日期 yyyy-mm-dd
-        ASTPattern date = ASTPattern.compile("(?:(?!0000)[0-9]{4}-(?:(?:0[1-9]|1[0-2])-(?:0[1-9]|1[0-9]|2[0-8])|(?:0[13-9]|1[0-2])-(?:29|30)|(?:0[13578]|1[02])-31)|(?:[0-9]{2}(?:0[48]|[2468][048]|[13579][26])|(?:0[48]|[2468][048]|[13579][26])00)-02-29)");
-        System.out.println(date.matcher("2022-06-30").isMatch());
+        String  dateRegex =  "(?:(?!0000)[0-9]{4}-(?:(?:0[1-9]|1[0-2])-(?:0[1-9]|1[0-9]|2[0-8])|(?:0[13-9]|1[0-2])-(?:29|30)|(?:0[13578]|1[02])-31)|(?:[0-9]{2}(?:0[48]|[2468][048]|[13579][26])|(?:0[48]|[2468][048]|[13579][26])00)-02-29)";
+        ASTPattern date = ASTPattern.compile(dateRegex);
+        if (!date.matcher("2022-06-30").isMatch()) {
+            System.out.println("测试:"+dateRegex+"失败");
+        }
         //ipv4地址
-        ASTPattern ip = ASTPattern.compile("((?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)");
-        System.out.println(ip.matcher("01.01.01.01").isMatch());
+        String ipRegex = "((?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)";
+        ASTPattern ip = ASTPattern.compile(ipRegex);
+       if(!ip.matcher("01.01.01.01").isMatch()){
+           System.out.println("测试:"+ipRegex+"失败");
+       }
         //ipv6地址
-        ASTPattern ipv6 = ASTPattern.compile("(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))");
-        System.out.println(ipv6.matcher("2345:0425:2CA1:0000:0000:0567:5673:23b5").isMatch());
+        String ipv6Regex = "(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))";
+        ASTPattern ipv6 = ASTPattern.compile(ipv6Regex);
+        if(!ipv6.matcher("2345:0425:2CA1:0000:0000:0567:5673:23b5").isMatch()){
+            System.out.println("测试:"+ipv6Regex+"失败");
+        }
         //匹配邮件
-        ASTPattern codeMatcher = ASTPattern.compile("[\\w!#$%&'*+/=?^_`{|}~-]+(\\.[\\w!#$%&'*+/=?^_`{|}~-]+)*@([\\w]([\\w-]*[\\w])?\\.)+[\\w]([\\w-]*[\\w])?");
-        System.out.println(codeMatcher.matcher("abc@qq.com").isMatch());
+        String emailRegex = "[\\w!#$%&'*+/=?^_`{|}~-]+(\\.[\\w!#$%&'*+/=?^_`{|}~-]+)*@([\\w]([\\w-]*[\\w])?\\.)+[\\w]([\\w-]*[\\w])?";
+        ASTPattern codeMatcher = ASTPattern.compile(emailRegex);
+        if (!codeMatcher.matcher("abc@qq.com").isMatch()) {
+            System.out.println("测试:"+emailRegex+"失败");
+        }
         //单词边界
-        ASTPattern wordBound = ASTPattern.compile("\\b[\\w.%+-]+@[\\w.-]+\\.[a-zA-Z]{2,6}\\b");
-        System.out.println(wordBound.matcher("asdf test@runoob.com sdf sdf").find());
+        String wordBoundRegex = "\\b[\\w.%+-]+@[\\w.-]+\\.[a-zA-Z]{2,6}\\b";
+        ASTPattern wordBound = ASTPattern.compile(wordBoundRegex);
+        if (!wordBound.matcher("asdf test@runoob.com sdf sdf").find()) {
+            System.out.println("测试:"+wordBoundRegex+"失败");
+        }
         //正向预查,预查是做不到 Match的
-        ASTPattern matcher1 = ASTPattern.compile("ab(?=c)");
-        System.out.println(matcher1.matcher("abc").find());
+        String matcher1Regex = "ab(?=c)";
+        ASTPattern matcher1 = ASTPattern.compile(matcher1Regex);
+        if (!matcher1.matcher("abc").find()) {
+            System.out.println("测试:"+matcher1Regex+"失败");
+        }
         //正向否定预查
-        ASTPattern matcher2 = ASTPattern.compile("ab(?!c)");
-        System.out.println(matcher2.matcher("aba").find());
+        String matcher2Regex = "ab(?!c)";
+        ASTPattern matcher2 = ASTPattern.compile(matcher2Regex);
+        if (!matcher2.matcher("aba").find()) {
+            System.out.println("测试:"+matcher2Regex+"失败");
+        }
         //反向预查
-        ASTPattern matcher3 = ASTPattern.compile("(?<=c)ab");
-        System.out.println(matcher3.matcher("cab").find());
+        String matcher3Regex = "(?<=c)ab";
+        ASTPattern matcher3 = ASTPattern.compile(matcher3Regex);
+        if (!matcher3.matcher("cab").find()) {
+            System.out.println("测试:"+matcher3Regex+"失败");
+        }
         //反向否定预查
-        ASTPattern matcher4 = ASTPattern.compile("(?<!c)ab");
-        System.out.println(matcher4.matcher("aab").find());
+        String matcher4Regex = "(?<!c)ab";
+        ASTPattern matcher4 = ASTPattern.compile(matcher4Regex);
+        if (!matcher4.matcher("aab").find()) {
+            System.out.println("测试:"+matcher4Regex+"失败");
+        }
         //分组捕获
-        ASTPattern matcher5 = ASTPattern.compile("(abc)cd\\1\\1");
-        System.out.println(matcher5.matcher("abccdabcabcalsdkjfisod").find());
+        String matcher5Regex = "(abc)cd\\1\\1";
+        ASTPattern matcher5 = ASTPattern.compile(matcher5Regex);
+        if (!matcher5.matcher("abccdabcabcalsdkjfisod").find()) {
+            System.out.println("测试:"+matcher5Regex+"失败");
+        }
+        System.out.println("--------------------testFeature -- end-------------------");
 
     }
     /**
@@ -82,7 +118,9 @@ public class ASTRunner {
         ASTPattern astMatcher = ASTPattern.compile("(?:(?!0000)[0-9]{4}-(?:(?:0[1-9]|1[0-2])-(?:0[1-9]|1[0-9]|2[0-8])|(?:0[13-9]|1[0-2])-(?:29|30)|(?:0[13578]|1[02])-31)|(?:[0-9]{2}(?:0[48]|[2468][048]|[13579][26])|(?:0[48]|[2468][048]|[13579][26])00)-02-29)");
         String str1 = matcher.replaceAll("bb");
         String str2 = astMatcher.matcher("  2022-06-30 --  2022-06-30  bbb -- ").replaceAll( "bb");
-        System.out.println(str1.equals(str2));
+        if (!str1.equals(str2)) {
+            System.out.println("replace 测试失败");
+        }
     }
     /**
      * 测试 分组
@@ -92,9 +130,15 @@ public class ASTRunner {
         ASTPattern pattern = ASTPattern.compile("(a)(b)(c)(?<hello>d)");
         ASTMatcher matcher = pattern.matcher("abcdef");
         matcher.find();
-        System.out.println(matcher.group(0));
-        System.out.println(matcher.group(1));
-        System.out.println(matcher.group("hello"));
+        if (!Objects.equals(matcher.group(0), "a")) {
+            System.out.println("分组捕获测试失败");
+        }
+        if (!Objects.equals(matcher.group(1), "b")) {
+            System.out.println("分组捕获测试失败");
+        }
+        if (!Objects.equals(matcher.group("hello"), "d")) {
+            System.out.println("分组捕获测试失败");
+        }
     }
 
     /**
@@ -135,11 +179,11 @@ public class ASTRunner {
                 ASTMatcher astMatcher = astPattern.matcher(text);
                 Matcher matcher = pattern.matcher(text);
                 if (astMatcher.find() != matcher.find()) {
-                    System.out.println("find测试错误: regex:\n"+ regex+"\n case:\n"+text);
+                    System.out.println("find测试错误regex:\n"+ regex+"\ncase:\n"+text);
                     break;
                 }
                 if (astMatcher.isMatch() != matcher.matches()) {
-                    System.out.println("match测试错误: regex:\n"+ regex+"\n case:\n"+text);
+                    System.out.println("match测试错误regex:\n"+ regex+"\ncase:\n"+text);
                     break;
                 }
             }
