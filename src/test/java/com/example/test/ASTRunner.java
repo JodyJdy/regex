@@ -1,18 +1,23 @@
 package com.example.test;
 
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import com.jody.regex.ASTMatcher;
 import com.jody.regex.ASTPattern;
+
+import java.io.*;
+import java.net.URISyntaxException;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ASTRunner {
-    public static void main(String[] args) {
-
-        test();
+    public static void main(String[] args) throws IOException, URISyntaxException {
         executeTestCase();
-
+        test();
     }
+
     public static void test(){
         //        //高级特性测试
         testFeature();
@@ -114,22 +119,31 @@ public class ASTRunner {
         long end2 = System.currentTimeMillis();
         System.out.println("自己Regex:" + (end2 - start2));
     }
-    public static void executeTestCase(){
+    public static void executeTestCase() throws IOException {
         System.out.println("-------------------- 执行测试用例 ---------------");
-       for(int i=0;i<TestCase.regexs.length;i++){
-          Pattern pattern = Pattern.compile(TestCase.regexs[i]);
-          ASTPattern astPattern = ASTPattern.compile(TestCase.regexs[i]);
-           for (String str : TestCase.tests[i]) {
-               if(pattern.matcher(str).matches() != astPattern.matcher(str).isMatch()){
-                   System.out.println("match测试错误: regex:"+ TestCase.regexs[i]+ "\n str:"+str);
-                   break;
-               }
-              if(pattern.matcher(str).find() != astPattern.matcher(str).find()){
-                  System.out.println("find测试错误: regex:"+ TestCase.regexs[i]+ "\n str:"+str);
-                  break;
-              }
-           }
-       }
+        FileInputStream fileInputStream = new FileInputStream("regex.json");
+        JSONArray objects = JSON.parseArray(fileInputStream.readAllBytes());
+        System.out.println(objects.size());
+        for(int i=0; i<objects.size(); i++){
+            JSONObject object = objects.getJSONObject(i);
+            String regex = object.getString("regex");
+            JSONArray array = object.getJSONArray("case");
+            ASTPattern astPattern = ASTPattern.compile(regex);
+            Pattern pattern = Pattern.compile(regex);
+            for(int j=0; j<array.size(); j++){
+                String text = array.getString(j);
+                ASTMatcher astMatcher = astPattern.matcher(text);
+                Matcher matcher = pattern.matcher(text);
+                if (astMatcher.find() != matcher.find()) {
+                    System.out.println("find测试错误: regex:\n"+ regex+"\n case:\n"+text);
+                    break;
+                }
+                if (astMatcher.isMatch() != matcher.matches()) {
+                    System.out.println("match测试错误: regex:\n"+ regex+"\n case:\n"+text);
+                    break;
+                }
+            }
+        }
         System.out.println("-------------------- 执行测试用例结束 ---------------");
     }
 }
