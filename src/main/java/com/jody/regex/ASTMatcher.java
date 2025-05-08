@@ -473,7 +473,13 @@ public class ASTMatcher {
                     numAstMaxI[numAstNo] = Util.NONE;
                 }
             }
-            return searchTree(getNextAndGroupEndCheck(rangeAst, i), i, end);
+            NumAstStatus astStatus = new NumAstStatus(rangeAst);
+            clearNumAstStatus(rangeAst);
+            boolean r =  searchTree(getNextAndGroupEndCheck(rangeAst, i), i, end);
+            if (!r) {
+                astStatus.resumeStatus();
+            }
+            return r;
             //match模式 或者 find模式的非贪心查找
         } else {
             //需要保留当前状态,如果搜索失败后，当前状态需要在后续的搜索使用到

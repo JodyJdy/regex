@@ -172,8 +172,8 @@ public class ASTRunner {
             JSONObject object = objects.getJSONObject(i);
             String regex = object.getString("regex");
             JSONArray array = object.getJSONArray("case");
-            ASTPattern astPattern = ASTPattern.compile(regex);
             Pattern pattern = Pattern.compile(regex);
+            ASTPattern astPattern = ASTPattern.compile(regex);
             for(int j=0; j<array.size(); j++){
                 String text = array.getString(j);
                 ASTMatcher astMatcher = astPattern.matcher(text);
