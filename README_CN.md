@@ -1,6 +1,6 @@
 # regex
 实现Java Regular Expression，并进行了一些扩展
-支持的语法功能如下：
+**支持全部的Java语法功能：**
 * ^
 * \*
 * \$
@@ -27,6 +27,9 @@
 * \p{}
 * \c
 * \Q \E \A \z \Z \R
+
+**扩展:**
+* \G 支持简单的递归正则
 
 暴漏出的使用的类为ASTPattern,ASTMatcher，使用方式为：
 ## 1.编译正则表达式
@@ -61,6 +64,13 @@ String str2 = matcher.replaceAll("你好");  // 将所有出现的进行替换
 String g = matcher.group(0);
 String g1 = matcher.group("group");
 
+```
+
+## 6. 递归
+```java
+ASTPattern pattern = ASTPattern.compile("x|a\\G*b");
+ASTMatcher matcher = pattern.matcher("axxxxxxxxxxxxxxb");
+System.out.println(matcher.isMatch());
 ```
 
 ## todo

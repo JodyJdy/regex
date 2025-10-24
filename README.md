@@ -1,6 +1,8 @@
 # regex
 Implemented Java Regular Expression and made some extensions
-The supported grammar functions are as follows:
+The supported grammar functions are as follows
+
+**all java regex grammar**
 * ^
 * \*
 * \$
@@ -27,6 +29,9 @@ The supported grammar functions are as follows:
 * \p{}
 * \c
 * \Q \E \A \z \Z \R
+ 
+**extensions:**
+* \G  support simple recursive regex
 
 The exposed used classes are ASTPattern and ASTMatcher. The usage method is as follows:
 ## 1.Compiler
@@ -61,6 +66,12 @@ String str2 = matcher.replaceAll("你好");
 String g = matcher.group(0);
 String g1 = matcher.group("group");
 
+```
+## 6. recursive
+```java
+ASTPattern pattern = ASTPattern.compile("x|a\\G*b");
+ASTMatcher matcher = pattern.matcher("axxxxxxxxxxxxxxb");
+System.out.println(matcher.isMatch());
 ```
 
 ## todo

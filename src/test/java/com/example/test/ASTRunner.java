@@ -7,7 +7,6 @@ import com.jody.regex.ASTMatcher;
 import com.jody.regex.ASTPattern;
 
 import java.io.*;
-import java.net.URISyntaxException;
 
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -26,6 +25,8 @@ public class ASTRunner {
         testReplace();
         //测试分组
         testGroup();
+        //测试递归
+        testRecursive();
         String emailRex = "[\\w!#$%&'*+/=?^_`{|}~-]+(\\.[\\w!#$%&'*+/=?^_`{|}~-]+)*@([\\w]([\\w-]*[\\w])?\\.)+[\\w]([\\w-]*[\\w])?";
         String email = "abc@qq.com";
         performanceCompare(emailRex,email,1000000);
@@ -193,5 +194,21 @@ public class ASTRunner {
             }
         }
         System.out.println("-------------------- 执行测试用例结束 ---------------");
+    }
+    /**
+     * 测试 递归
+     */
+    public static void testRecursive(){
+        ASTPattern pattern1 = ASTPattern.compile("x|a\\G*b");
+        ASTMatcher matcher1 = pattern1.matcher("axxxxxxxxxxxxxxb");
+        if (!matcher1.isMatch()) {
+            System.out.println("递归测试1出错");
+        }
+
+        ASTPattern pattern2 = ASTPattern.compile("ab\\Gc|abc|a\\Gb|ab");
+        ASTMatcher matcher2 = pattern2.matcher("abaaaabcbbbc");
+        if (!matcher2.isMatch()) {
+            System.out.println("递归测试2出错");
+        }
     }
 }

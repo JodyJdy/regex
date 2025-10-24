@@ -34,6 +34,8 @@ public class ASTMatcher {
      */
     Ast curEndAst = Util.END_AST;
 
+    int expressionLevel=  0;
+
 
     /**
      * 记录组的捕获情况
@@ -264,7 +266,13 @@ public class ASTMatcher {
         }
         boolean strIsEnd = strIsEnd(i, end);
         //这里要先检查 treeIsEnd
-        if (treeIsEnd(tree) && strIsEnd) {
+        boolean treeIsEnd = treeIsEnd(tree);
+        //递归结束，捕获当前的result
+        if (treeIsEnd && this.expressionLevel > 0) {
+            result = i;
+            return true;
+        }
+        if (treeIsEnd && strIsEnd) {
             return true;
         }
         tree = groupStartCheck(tree, i, str);
@@ -275,6 +283,9 @@ public class ASTMatcher {
         //再次检查 treeIsEnd
         if (treeIsEnd(tree) && strIsEnd) {
             return true;
+        }
+        if (tree instanceof RecursiveTerminalAst) {
+            return searchRecursive((RecursiveTerminalAst) tree, i, end);
         }
         if (tree instanceof TerminalAst) {
             TerminalAst terminalAst = (TerminalAst) tree;
@@ -671,53 +682,14 @@ public class ASTMatcher {
     }
 
     /**
-     * 处理表达式情况
-     */
-    private boolean searchExpression(TerminalAst expression, int i, int end) {
-        return false;
-//        int referenceGroupNum = Terminal.getReferenceGroupNum(expression.type);
-//        if(referenceGroupNum >=groupAsts.size()){
-//            throw new RuntimeException("groupNum dose not exist");
-//        }
-//        expressionLevel++;
-//        //获取引用的组
-//        Ast ast = groupAsts.get(referenceGroupNum);
-//        final Ast beforeEnd = curEndAst;
-//        curEndAst = ast.getNext();
-//        Supplier<Boolean> curExecute = execute;
-//        execute = ()->{
-//            curEndAst = beforeEnd;
-//            return searchTree(getNextAndGroupEndCheck(expression, this.result), this.result, end);
-//        };
-//        boolean suc = searchTree(ast, i, end);
-//        execute = curExecute;
-//        expressionLevel--;
-//        return suc;
-    }
-
-    /**
      * 处理递归的情况
      */
-    private boolean searchRecursive(TerminalAst recursive, int i, int end) {
-        return false;
-//        //贪婪模式，优先读取
-//        if (recursive.recursiveGreedy) {
-//            expressionLevel++;
-//            boolean recursiveSuc = searchTree(regex, i, end) && searchTree(getNextAndGroupEndCheck(recursive, this.result),this.result,end);
-//            expressionLevel--;
-//            if(recursiveSuc){
-//                return true;
-//            }
-//            return searchTree(getNextAndGroupEndCheck(recursive, i), i, end);
-//        }
-//        //非贪婪模式，优先处理下一个节点
-//        if (searchTree(getNextAndGroupEndCheck(recursive, i), i, end)) {
-//            return true;
-//        }
-//        expressionLevel++;
-//        boolean recursiveSuc = searchTree(regex, i, end)&&searchTree(getNextAndGroupEndCheck(recursive, this.result),this.result,end);
-//        expressionLevel--;
-//        return recursiveSuc;
+    private boolean searchRecursive(RecursiveTerminalAst recursive, int i, int end) {
+        //贪婪模式，优先读取
+        expressionLevel++;
+        boolean recursiveSuc = searchTree(regex, i, end) &&  searchTree(getNextAndGroupEndCheck(recursive, this.result), this.result, end);
+        expressionLevel--;
+        return recursiveSuc;
     }
 
     /**
