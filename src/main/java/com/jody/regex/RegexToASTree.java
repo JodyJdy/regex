@@ -673,21 +673,23 @@ class RegexToASTree {
 
     private CharPredicates.CharPredicate processRange(char start, char end) {
         CharPredicates.CharPredicate range = CharPredicates.range(start, end);
+        char upperStart;
+        char upperEnd;
+        char lowerStart;
+        char lowerEnd;
         if (Modifier.openUnicodeCharacterClass(modifier)) {
-            char upperStart = Character.toUpperCase(start);
-            char upperEnd = Character.toUpperCase(end);
-            char lowerStart = Character.toLowerCase(start);
-            char lowerEnd = Character.toLowerCase(end);
-            range = range.union(CharPredicates.range(upperStart, upperEnd))
-                    .union(CharPredicates.range(lowerStart, lowerEnd));
+            upperStart = Character.toUpperCase(start);
+            upperEnd = Character.toUpperCase(end);
+            lowerStart = Character.toLowerCase(start);
+            lowerEnd = Character.toLowerCase(end);
         } else{
-            char upperStart = (char) ASCII.toUpper(start);
-            char upperEnd = (char) ASCII.toUpper(end);
-            char lowerStart = (char) ASCII.toLower(start);
-            char lowerEnd = (char) ASCII.toLower(end);
-            range = range.union(CharPredicates.range(upperStart, upperEnd))
-                    .union(CharPredicates.range(lowerStart, lowerEnd));
+            upperStart = (char) ASCII.toUpper(start);
+            upperEnd = (char) ASCII.toUpper(end);
+            lowerStart = (char) ASCII.toLower(start);
+            lowerEnd = (char) ASCII.toLower(end);
         }
+        range = range.union(CharPredicates.range(upperStart, upperEnd))
+                .union(CharPredicates.range(lowerStart, lowerEnd));
         return range;
     }
     private Ast processGroup(){
