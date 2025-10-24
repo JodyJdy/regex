@@ -194,6 +194,54 @@ public class ASTMatcher {
     }
 
     /**
+     * 切分字符串
+     * @return
+     */
+    public String[] split() {
+        return split(Integer.MAX_VALUE);
+    }
+    /**
+     *切分
+     * @param dim 分割的次数
+     */
+    public String[] split(int dim) {
+        if (dim <= 0) {
+           return new String[0];
+        }
+
+        reset();
+        List<String> array = new ArrayList<>();
+        if (find()) {
+            int start;
+            int end;
+            int lastAppendPosition = 0;
+            do {
+                start = findResultStart;
+                end = result;
+                if (start > lastAppendPosition) {
+                    array.add(str.substring(lastAppendPosition, start));
+                }
+                if (array.size() == dim) {
+                    return array.toArray(new String[0]);
+                }
+                lastAppendPosition = end;
+                int nextSearch = end;
+                if (nextSearch == start) {
+                    nextSearch++;
+                }
+                if (!find(nextSearch)) {
+                    break;
+                }
+            } while (true);
+            if (end < str.length()) {
+                array.add(str.substring(end));
+            }
+            return array.toArray(new String[0]);
+        }
+        return array.toArray(new String[0]);
+    }
+
+    /**
      *将str中符合条件的全部替换成replacement
      */
     public String replaceAll(String replacement) {

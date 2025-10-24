@@ -51,7 +51,16 @@ String g = matcher.group(0);
 String g1 = matcher.group("group");
 
 ```
-## 6. recursive
+
+## 6. split(),split(int) 
+```java
+ASTPattern astPattern = ASTPattern.compile("\\d+");
+ASTMatcher matcher = astPattern.matcher("absdf123asdlkfsda34asdf");
+System.out.println(Arrays.toString(matcher.split()));
+System.out.println(Arrays.toString(matcher.split(2)));
+```
+
+## 7. recursive
 ```java
 ASTPattern pattern = ASTPattern.compile("x|a\\g*b");
 ASTMatcher matcher = pattern.matcher("axxxxxxxxxxxxxxb");
