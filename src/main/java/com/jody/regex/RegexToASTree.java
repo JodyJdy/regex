@@ -135,10 +135,50 @@ class RegexToASTree {
     }
 
 
+    /**
+     * 寻找一条到END节点的路径，该路径绝不能有 RecursiveTerminalAst
+     */
+    private static void  searchPaths(Ast ast) {
+        if (!doSearchPaths(ast)) {
+            throw new RuntimeException("正则表达式递归引用");
+        }
+    }
+
+    private static Boolean doSearchPaths(Ast ast) {
+        if (ast instanceof OrAst) {
+            OrAst orAst = (OrAst) ast;
+            boolean result = false;
+            for (Ast node : orAst.asts) {
+                result = result || doSearchPaths(node);
+            }
+            return result;
+        } else if (ast instanceof CatAst) {
+            CatAst catAst = (CatAst) ast;
+            boolean result = true;
+            for (Ast a : catAst.asts) {
+                result = result && doSearchPaths(a);
+            }
+            return result;
+        } else if (ast instanceof NumAst) {
+            return doSearchPaths(((NumAst) ast).ast) && doSearchPaths(ast.getNext());
+        } else if(ast instanceof RecursiveTerminalAst){
+            return false;
+        }else if (ast instanceof TerminalAst) {
+            return doSearchPaths(ast.getNext());
+        }
+        return true;
+    }
+
+
+
+
     Ast astTree() {
         int curModifier = modifier;
         Ast ast = orTree();
         ast.setNext(Util.END_AST);
+        if(hasRecursive){
+            searchPaths(ast);
+        }
         tree2Linked(ast);
         //设置节点中可计数节点的编号范围
         Util.setNodeMinMaxNumAstNo(ast);
