@@ -535,7 +535,7 @@ class RegexToASTree {
                 case 'R': type = Terminal.UNICODE_LINE_BREAK;next();
                     break;
                 // 递归类型
-                case 'G': type = Terminal.RECURSIVE;next();
+                case 'g': type = Terminal.RECURSIVE;next();
                     break;
                 default:
                     character = getCh();

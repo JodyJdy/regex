@@ -199,13 +199,13 @@ public class ASTRunner {
      * 测试 递归
      */
     public static void testRecursive(){
-        ASTPattern pattern1 = ASTPattern.compile("x|a\\G*b");
+        ASTPattern pattern1 = ASTPattern.compile("x|a\\g*b");
         ASTMatcher matcher1 = pattern1.matcher("axxxxxxxxxxxxxxb");
         if (!matcher1.isMatch()) {
             System.out.println("递归测试1出错");
         }
 
-        ASTPattern pattern2 = ASTPattern.compile("ab\\Gc|abc|a\\Gb|ab");
+        ASTPattern pattern2 = ASTPattern.compile("ab\\gc|abc|a\\gb|ab");
         ASTMatcher matcher2 = pattern2.matcher("abaaaabcbbbc");
         if (!matcher2.isMatch()) {
             System.out.println("递归测试2出错");

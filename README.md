@@ -2,38 +2,22 @@
 Implemented Java Regular Expression and made some extensions
 The supported grammar functions are as follows
 
-**all java regex grammar**
-* ^
-* \*
-* \$
-* |
-* \+
-* \? Support non-greedy matching
-* []
-* {} Support {n} {n,} {n,m}
-* ()  Group Catch
-* .
-* \b
-* \B
-* (?=)
-* (?<=)
-* (?!)
-* (?<!)
-* (?<Name>) Group naming
-* \s \S
-* \d \D
-* \w \W
-* \num  Group reference
-* \r \t \f \v \n
-* (?i) (?m) (?d) (?n) (?s)
-* \p{}
-* \c
-* \Q \E \A \z \Z \R
+**support regex grammar**
+
+reference: [Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html)
+
+**not support java regex grammar**
+
+* \G The end of the previous match
  
 **extensions:**
-* \G  support simple recursive regex
+* \g  support simple recursive regex
 
-The exposed used classes are ASTPattern and ASTMatcher. The usage method is as follows:
+
+
+
+## Usage
+**The exposed used classes are ASTPattern and ASTMatcher. The usage method is as follows:**
 ## 1.Compiler
 
 ```java
@@ -69,7 +53,7 @@ String g1 = matcher.group("group");
 ```
 ## 6. recursive
 ```java
-ASTPattern pattern = ASTPattern.compile("x|a\\G*b");
+ASTPattern pattern = ASTPattern.compile("x|a\\g*b");
 ASTMatcher matcher = pattern.matcher("axxxxxxxxxxxxxxb");
 System.out.println(matcher.isMatch());
 ```

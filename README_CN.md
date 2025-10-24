@@ -1,37 +1,21 @@
 # regex
 实现Java Regular Expression，并进行了一些扩展
-**支持全部的Java语法功能：**
-* ^
-* \*
-* \$
-* |
-* \+
-* \? 支持非贪婪匹配
-* []
-* {} 包含 {n} {n,} {n,m}
-* ()  分组
-* .
-* \b
-* \B
-* (?=)
-* (?<=)
-* (?!)
-* (?<!)
-* (?<名称>) 分组命名
-* \s \S
-* \d \D
-* \w \W
-* \num  分组引用
-* \r \t \f \v \n
-* (?i) (?m) (?d) (?n) (?s)
-* \p{}
-* \c
-* \Q \E \A \z \Z \R
+
+**支持的Java语法功能：** : 参考[正则表达式语法](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html)
+
+
+**不支持的Java语法功能：**: 
+
+\G	The end of the previous match
+
 
 **扩展:**
-* \G 支持简单的递归正则
+* \g 支持简单的递归正则
 
-暴漏出的使用的类为ASTPattern,ASTMatcher，使用方式为：
+
+# 用法
+
+**暴漏出的使用的类为ASTPattern,ASTMatcher，使用方式为：**
 ## 1.编译正则表达式
 
 ```java
@@ -68,7 +52,7 @@ String g1 = matcher.group("group");
 
 ## 6. 递归
 ```java
-ASTPattern pattern = ASTPattern.compile("x|a\\G*b");
+ASTPattern pattern = ASTPattern.compile("x|a\\g*b");
 ASTMatcher matcher = pattern.matcher("axxxxxxxxxxxxxxb");
 System.out.println(matcher.isMatch());
 ```
