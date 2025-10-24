@@ -1,15 +1,15 @@
 # regex
-Implemented Java Regular Expression and made some extensions
-The supported grammar functions are as follows:
+实现Java Regular Expression，并进行了一些扩展
+支持的语法功能如下：
 * ^
 * \*
 * \$
 * |
 * \+
-* \? Support non-greedy matching
-* []  
-* {} Support {n} {n,} {n,m}
-* ()  Group Catch
+* \? 支持非贪婪匹配
+* []
+* {} 包含 {n} {n,} {n,m}
+* ()  分组
 * .
 * \b
 * \B
@@ -17,46 +17,46 @@ The supported grammar functions are as follows:
 * (?<=)
 * (?!)
 * (?<!)
-* (?<Name>) Group naming
+* (?<名称>) 分组命名
 * \s \S
 * \d \D
 * \w \W
-* \num  Group reference
-* \r \t \f \v \n 
+* \num  分组引用
+* \r \t \f \v \n
 * (?i) (?m) (?d) (?n) (?s)
 * \p{}
 * \c
-* \Q \E \A \z \Z \R 
+* \Q \E \A \z \Z \R
 
-The exposed used classes are ASTPattern and ASTMatcher. The usage method is as follows:
-## 1.Compiler
+暴漏出的使用的类为ASTPattern,ASTMatcher，使用方式为：
+## 1.编译正则表达式
 
 ```java
 import com.jody.regex.ASTPattern;
 
 ASTPattern astPattern = ASTPattern.compile("[\u4E00-\u9FA5]+");
-ASTMatcher matcher = astPattern.matcher("hello world");
+ASTMatcher matcher = astPattern.matcher("你好，世界");
 ```
-## 2. match 
+## 2. match 匹配
 boolean result = matcher.isMatch();
 
-## 3. find() 
+## 3. find() 查找
 ```java
 boolean re1 = matcher.find();
-boolean re2 = matcher.find(i); //Start the search from the i.
-boolean re3 = matcher.backwardFind();//Search from the tail end
-boolean re4 = matcher.backwardFind(end); //Search with "end" as the ending character.
-FindResult result = matcher.getFindResult(); //Obtain the range of the search results
+boolean re2 = matcher.find(i); //从下标i开始查找
+boolean re3 = matcher.backwardFind();//从尾部开始查找
+boolean re4 = matcher.backwardFind(end); //以下标end作为尾部，进行查找
+FindResult result = matcher.getFindResult(); /获取查找结果的区间
 ```
 
 
-## 4. replaceFirst(),repalceAll() 
+## 4. replaceFirst(),repalceAll() 替换
 ```java
-String str1 = matcher.replaceFirst("你好"); 
-String str2 = matcher.replaceAll("你好"); 
+String str1 = matcher.replaceFirst("你好"); //将第一个出现的进行替换
+String str2 = matcher.replaceAll("你好");  // 将所有出现的进行替换
 ```
 
-## 5. group(int), group(name) 
+## 5. group(int), group(name) 获取分组
 ```java
 String g = matcher.group(0);
 String g1 = matcher.group("group");
@@ -64,4 +64,4 @@ String g1 = matcher.group("group");
 ```
 
 ## todo
-More tests
+更多的测试

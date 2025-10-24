@@ -1,15 +1,15 @@
 # regex
-实现Java Regular Expression，并进行了一些扩展
-支持的语法功能如下：
+Implemented Java Regular Expression and made some extensions
+The supported grammar functions are as follows:
 * ^
 * \*
 * \$
 * |
 * \+
-* \? 支持非贪婪匹配
-* []  
-* {} 包含 {n} {n,} {n,m}
-* ()  分组
+* \? Support non-greedy matching
+* []
+* {} Support {n} {n,} {n,m}
+* ()  Group Catch
 * .
 * \b
 * \B
@@ -17,46 +17,46 @@
 * (?<=)
 * (?!)
 * (?<!)
-* (?<名称>) 分组命名
+* (?<Name>) Group naming
 * \s \S
 * \d \D
 * \w \W
-* \num  分组引用
-* \r \t \f \v \n 
+* \num  Group reference
+* \r \t \f \v \n
 * (?i) (?m) (?d) (?n) (?s)
 * \p{}
 * \c
-* \Q \E \A \z \Z \R 
+* \Q \E \A \z \Z \R
 
-暴漏出的使用的类为ASTPattern,ASTMatcher，使用方式为：
-## 1.编译正则表达式
+The exposed used classes are ASTPattern and ASTMatcher. The usage method is as follows:
+## 1.Compiler
 
 ```java
 import com.jody.regex.ASTPattern;
 
 ASTPattern astPattern = ASTPattern.compile("[\u4E00-\u9FA5]+");
-ASTMatcher matcher = astPattern.matcher("你好，世界");
+ASTMatcher matcher = astPattern.matcher("hello world");
 ```
-## 2. match 匹配
+## 2. match
 boolean result = matcher.isMatch();
 
-## 3. find() 查找
+## 3. find()
 ```java
 boolean re1 = matcher.find();
-boolean re2 = matcher.find(i); //从下标i开始查找
-boolean re3 = matcher.backwardFind();//从尾部开始查找
-boolean re4 = matcher.backwardFind(end); //以下标end作为尾部，进行查找
-FindResult result = matcher.getFindResult(); /获取查找结果的区间
+boolean re2 = matcher.find(i); //Start the search from the i.
+boolean re3 = matcher.backwardFind();//Search from the tail end
+boolean re4 = matcher.backwardFind(end); //Search with "end" as the ending character.
+FindResult result = matcher.getFindResult(); //Obtain the range of the search results
 ```
 
 
-## 4. replaceFirst(),repalceAll() 替换
+## 4. replaceFirst(),repalceAll()
 ```java
-String str1 = matcher.replaceFirst("你好"); //将第一个出现的进行替换
-String str2 = matcher.replaceAll("你好");  // 将所有出现的进行替换
+String str1 = matcher.replaceFirst("你好"); 
+String str2 = matcher.replaceAll("你好"); 
 ```
 
-## 5. group(int), group(name) 获取分组
+## 5. group(int), group(name)
 ```java
 String g = matcher.group(0);
 String g1 = matcher.group("group");
@@ -64,4 +64,4 @@ String g1 = matcher.group("group");
 ```
 
 ## todo
-更多的测试
+More tests
