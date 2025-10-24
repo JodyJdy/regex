@@ -165,8 +165,12 @@ public class ASTRunner {
     }
     public static void executeTestCase() throws IOException {
         System.out.println("-------------------- 执行测试用例 ---------------");
-        FileInputStream fileInputStream = new FileInputStream("regex.json");
-        JSONArray objects = JSON.parseArray(fileInputStream.readAllBytes());
+        byte[] bytes;
+        try (FileInputStream fileInputStream = new FileInputStream("regex.json")) {
+            bytes = new byte[fileInputStream.available()];
+            fileInputStream.read(bytes);
+        }
+        JSONArray objects = JSON.parseArray(bytes);
         System.out.println(objects.size());
         for(int i=0; i<objects.size(); i++){
             JSONObject object = objects.getJSONObject(i);

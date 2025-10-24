@@ -97,6 +97,12 @@ class Terminal {
 
     final static int COMPOSITE = 1 << 20;
 
+    /**
+     *递归类型
+     */
+    final static int RECURSIVE = 1 << 21;
+
+
 
     static boolean isSimple(int type){
         return type == SIMPLE;

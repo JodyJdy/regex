@@ -64,5 +64,4 @@ String g1 = matcher.group("group");
 ```
 
 ## todo
-\G
 更多的测试

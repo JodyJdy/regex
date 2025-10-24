@@ -42,6 +42,9 @@ class RegexToASTree {
     private static final int UNI_CODE_LEN = 4;
 
 
+    boolean hasRecursive = false;
+
+
     int modifier;
     /**
      * 存储所有的组
@@ -491,6 +494,9 @@ class RegexToASTree {
                 // unicode line break
                 case 'R': type = Terminal.UNICODE_LINE_BREAK;next();
                     break;
+                // 递归类型
+                case 'G': type = Terminal.RECURSIVE;next();
+                    break;
                 default:
                     character = getCh();
                     next();
@@ -508,6 +514,12 @@ class RegexToASTree {
         if (terminatorMsg == null) {
             return new EmptyAst();
         }
+        //处理递归类型
+        if (terminatorMsg.type == Terminal.RECURSIVE) {
+            this.hasRecursive = true;
+            return new RecursiveTerminalAst();
+        }
+
         Character ch = terminatorMsg.ch;
         // 当没有转义符号时
         if (terminatorMsg.type == Terminal.SIMPLE && !terminatorMsg.hasTrans) {
