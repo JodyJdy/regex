@@ -140,7 +140,7 @@ class RegexToASTree {
      */
     private static void  searchPaths(Ast ast) {
         if (!doSearchPaths(ast)) {
-            throw new RuntimeException("正则表达式递归引用");
+            throw new RuntimeException("递归正则表达式无出口");
         }
     }
 
