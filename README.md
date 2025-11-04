@@ -1,4 +1,10 @@
 # regex
+
+<p align="center">
+  <a href="./README.md">English</a> 
+  <a href="./README_CN.md">简体中文</a> 
+</p>
+
 Implemented Java Regular Expression and made some extensions
 The supported grammar functions are as follows
 
@@ -61,10 +67,15 @@ System.out.println(Arrays.toString(matcher.split(2)));
 ```
 
 ## 7. recursive
+
+Use \\g to perform matching similar to the JSON structure.
+
 ```java
-ASTPattern pattern = ASTPattern.compile("x|a\\g*b");
-ASTMatcher matcher = pattern.matcher("axxxxxxxxxxxxxxb");
+
+ASTPattern astPattern = ASTPattern.compile("{}|{(\"a+\":(\\d+|\\g),)*(\"a+\":(\\d+|\\g)}");
+ASTMatcher matcher = astPattern.matcher("{\"aaa\":{\"aaa\":123,\"aaa\":456,\"aaa\":{}},\"aaa\":456,\"aaa\":{}}");
 System.out.println(matcher.isMatch());
+
 ```
 
 ## todo

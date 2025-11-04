@@ -1,4 +1,10 @@
 # regex
+
+<p align="center">
+  <a href="./README.md">English</a> 
+  <a href="./README_CN.md">简体中文</a> 
+</p>
+
 实现Java Regular Expression，并进行了一些扩展
 
 **支持的Java语法功能：** : 参考[正则表达式语法](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html)
@@ -59,10 +65,15 @@ System.out.println(Arrays.toString(matcher.split(2)));
 ```
 
 ## 7. 递归
+
+使用\\g，进行类似json结构的匹配
+
 ```java
-ASTPattern pattern = ASTPattern.compile("x|a\\g*b");
-ASTMatcher matcher = pattern.matcher("axxxxxxxxxxxxxxb");
+
+ASTPattern astPattern = ASTPattern.compile("{}|{(\"a+\":(\\d+|\\g),)*(\"a+\":(\\d+|\\g)}");
+ASTMatcher matcher = astPattern.matcher("{\"aaa\":{\"aaa\":123,\"aaa\":456,\"aaa\":{}},\"aaa\":456,\"aaa\":{}}");
 System.out.println(matcher.isMatch());
+
 ```
 
 ## todo
